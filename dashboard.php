@@ -9,7 +9,7 @@ $conn->query("DELETE FROM notebooks WHERE is_trashed = 1 AND trashed_at < NOW() 
 $current_id = "";
 $current_title = "";
 $current_content = "";
-$current_notebook_name_display = "Loose Note"; // Default
+$current_notebook_name_display = "Note"; // Default
 $current_updated_at = "";
 $editor_target_notebook_id = ""; 
 $search_query = "";
@@ -227,7 +227,7 @@ elseif ($view_mode == 'notes') $new_note_url .= "?view=notes";
 
 <div class="dashboard-container">
     
-    <div class="sidebar">
+<div class="sidebar">
         <form action="dashboard.php" method="GET">
             <?php if($filter_notebook_id): ?><input type="hidden" name="notebook" value="<?php echo $filter_notebook_id; ?>"><?php endif; ?>
             <input type="text" name="search" class="search-box" placeholder="🔍 Search notes..." value="<?php echo htmlspecialchars($search_query); ?>">
@@ -238,11 +238,21 @@ elseif ($view_mode == 'notes') $new_note_url .= "?view=notes";
         </div>
 
         <div class="nav-menu">
-            <a href="dashboard.php" class="nav-item <?php echo ($view_mode == 'all') ? 'active' : ''; ?>"><span class="nav-icon">🏠</span> All Notes</a>
-            <a href="dashboard.php?view=notes" class="nav-item <?php echo ($view_mode == 'notes') ? 'active' : ''; ?>"><span class="nav-icon">📄</span> Notes</a>
-            <a href="dashboard.php?view=notebooks_list" class="nav-item <?php echo ($view_mode == 'notebooks_list' || $view_mode == 'notebook') ? 'active' : ''; ?>"><span class="nav-icon">📓</span> Notebooks</a>
-            <a href="dashboard.php?view=trash" class="nav-item <?php echo ($view_mode == 'trash') ? 'active' : ''; ?>" style="margin-top:auto;"><span class="nav-icon">🗑️</span> Trash</a>
-        </div>
+            <a href="dashboard.php" class="nav-item <?php echo ($view_mode == 'all') ? 'active' : ''; ?>">
+                <span class="nav-icon">🏠</span> All Notes
+            </a>
+            
+            <a href="dashboard.php?view=notes" class="nav-item <?php echo ($view_mode == 'notes') ? 'active' : ''; ?>">
+                <span class="nav-icon">📄</span> Notes
+            </a>
+
+            <a href="dashboard.php?view=notebooks_list" class="nav-item <?php echo ($view_mode == 'notebooks_list' || $view_mode == 'notebook') ? 'active' : ''; ?>">
+                <span class="nav-icon">📓</span> Notebooks
+            </a>
+        </div> 
+        <a href="dashboard.php?view=trash" class="nav-item <?php echo ($view_mode == 'trash') ? 'active' : ''; ?>" style="margin-top:auto;">
+            <span class="nav-icon">🗑️</span> Trash
+        </a>
     </div>
 
     <?php if ($view_mode == 'notebooks_list'): ?>
