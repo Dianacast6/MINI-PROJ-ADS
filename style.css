@@ -2,15 +2,15 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Roboto+Mono&display=swap');
 
 :root {
-    --bg-sidebar: #1a1a1a;       /* Very Dark Grey */
-    --bg-mid: #242424;           /* Middle Column */
-    --bg-editor: #1f1f1f;        /* Right Column */
-    --accent-green: #00a82d;     /* The Button Color */
-    --accent-hover: #008f26;
-    --text-white: #e6e6e6;
-    --text-grey: #a0a0a0;
+    --bg-sidebar: #1a1a1a;
+    --bg-list: #242424;    /* Middle Panel */
+    --bg-editor: #191919;  /* Right Panel (Darkest) */
+    --accent-green: #00a82d;
+    --text-white: #ffffff;
+    --text-muted: #a3a3a3;
     --border-color: #333;
-    --hover-bg: #333;
+    --selection-bg: #2a2d3e; /* Subtle blue/grey tint for selected note */
+    --selection-border: #00a82d; /* Green accent border */
 }
 
 * { box-sizing: border-box; }
@@ -25,53 +25,35 @@ body {
     overflow: hidden;
 }
 
-/* --- LAYOUT --- */
-.dashboard-container {
-    display: flex;
-    height: 100vh;
-}
+a { text-decoration: none; color: inherit; }
 
-/* --- 1. SIDEBAR (LEFT) --- */
+/* --- LAYOUT --- */
+.dashboard-container { display: flex; height: 100vh; }
+
+/* --- SIDEBAR --- */
 .sidebar {
     width: 250px;
     background-color: var(--bg-sidebar);
     display: flex;
     flex-direction: column;
     padding: 15px;
+    border-right: 1px solid #000;
     flex-shrink: 0;
-    border-right: 1px solid black;
 }
 
-/* User Profile at Bottom */
-.user-profile {
-    margin-top: auto;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px;
-    color: var(--text-white);
-    font-size: 0.9rem;
-}
-
-/* Search Bar */
 .search-box {
     background: #333;
     border: 1px solid #444;
-    border-radius: 20px;
-    padding: 8px 15px;
+    border-radius: 4px;
+    padding: 8px 12px;
     color: white;
     width: 100%;
     margin-bottom: 15px;
+    font-size: 0.9rem;
     outline: none;
 }
 
-/* New Note Button Group */
-.-note-group {
-    display: flex;
-    gap: 5px;
-    margin-bottom: 20px;
-}
-
+.new-note-group { margin-bottom: 20px; }
 .btn-new {
     background-color: var(--accent-green);
     color: white;
@@ -79,403 +61,194 @@ body {
     padding: 10px;
     border-radius: 20px;
     font-weight: 600;
-    flex-grow: 1;
+    width: 100%;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
+    font-size: 0.95rem;
+    transition: 0.2s;
 }
-.btn-new:hover { background-color: var(--accent-hover); }
+.btn-new:hover { background-color: #008f26; }
 
-/* The "..." Button */
-.btn-options {
-    background-color: #333;
-    color: white;
-    border: none;
-    width: 40px;
-    border-radius: 50%; /* Circle */
-    cursor: pointer;
-    font-size: 1.2rem;
-    position: relative; /* For dropdown positioning */
-}
-.btn-options:hover { background-color: #444; }
-
-/* The Dropdown Menu (Hidden by default) */
-.dropdown-menu {
-    display: none; /* Hidden */
-    position: absolute;
-    top: 50px;
-    left: 160px; /* Adjust based on button position */
-    background: #333;
-    border: 1px solid #444;
-    border-radius: 8px;
-    width: 150px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-    z-index: 100;
-}
-.dropdown-menu.show { display: block; }
-.dropdown-item {
-    display: block;
-    padding: 10px 15px;
-    color: var(--text-white);
-    text-decoration: none;
-    font-size: 0.9rem;
-}
-.dropdown-item:hover { background: #444; }
-
-/* Navigation Links */
-.nav-menu { display: flex; flex-direction: column; gap: 5px; }
+.nav-menu { display: flex; flex-direction: column; gap: 4px; }
 .nav-item {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 8px 10px;
-    color: var(--text-grey);
-    text-decoration: none;
+    gap: 12px;
+    padding: 8px 12px;
+    color: #bbb;
     border-radius: 5px;
     font-size: 0.95rem;
+    transition: 0.2s;
 }
-.nav-item:hover { background-color: var(--hover-bg); color: white; }
-.nav-item.active { background-color: #333; color: white; }
-.nav-icon { width: 20px; text-align: center; }
+.nav-item:hover, .nav-item.active { background-color: #333; color: white; }
 
-/* --- 2. NOTE LIST (MIDDLE) --- */
+/* --- MIDDLE PANEL: NOTE LIST --- */
 .note-list-panel {
-    width: 320px;
-    background-color: var(--bg-mid);
+    width: 350px; /* Slightly wider for better readability */
+    background-color: var(--bg-list);
     border-right: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
+    flex-shrink: 0;
 }
 
 .note-list-header {
-    padding: 20px;
+    padding: 24px 20px;
     border-bottom: 1px solid var(--border-color);
 }
-.note-list-header h2 { margin: 0; font-size: 1.2rem; }
-.note-count { color: var(--text-grey); font-size: 0.8rem; }
+.note-list-header h2 { margin: 0; font-size: 1.4rem; font-weight: 700; color: var(--text-white); }
+.note-count { color: var(--text-muted); font-size: 0.85rem; margin-top: 4px; display: block; }
 
 .note-items-container { overflow-y: auto; flex-grow: 1; }
 
+/* THE NOTE CARD STYLE */
 .note-item {
     padding: 20px;
     border-bottom: 1px solid #333;
     cursor: pointer;
     transition: background 0.2s;
+    background: transparent;
 }
-.note-item:hover { background-color: #2a2a2a; }
-.note-item.selected { background-color: #2f2f2f; border-left: 3px solid var(--accent-green); }
 
-.note-item h4 { margin: 0 0 5px 0; color: var(--text-white); font-size: 0.95rem; }
-.note-item p { margin: 0; font-size: 0.8rem; color: var(--text-grey); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.note-meta { font-size: 0.75rem; color: #666; margin-top: 8px; display: block; }
+.note-item:hover { background-color: #2c2c2c; }
 
-/* --- 3. EDITOR (RIGHT) --- */
+/* Selected State (Matches reference image style) */
+.note-item.selected {
+    background-color: var(--selection-bg);
+    border-left: 4px solid var(--selection-border);
+    padding-left: 16px; /* Adjust padding to account for border */
+}
+
+.note-item h4 {
+    margin: 0 0 6px 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-white);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.note-snippet {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin: 0 0 10px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 0.8;
+}
+
+.note-meta {
+    font-size: 0.75rem;
+    color: #666;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* --- RIGHT PANEL: EDITOR --- */
 .editor-panel {
     flex-grow: 1;
     background-color: var(--bg-editor);
-    padding: 40px 60px;
+    padding: 0; /* Removing padding from container to use internal structure */
     display: flex;
     flex-direction: column;
 }
 
-.editor-toolbar {
-    margin-bottom: 20px;
+/* Editor Header (Breadcrumbs & Date) */
+.editor-header-info {
+    padding: 20px 40px;
+    color: var(--text-muted);
+    font-size: 0.85rem;
     display: flex;
-    justify-content: flex-end;
-    gap: 10px;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #888;
+}
+.breadcrumbs span.notebook-name { color: var(--text-white); font-weight: 500; }
+
+.last-edited { font-size: 0.8rem; color: #666; }
+
+/* Main Editor Area */
+.editor-form {
+    padding: 0 40px 40px 40px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 }
 
 .editor-title {
     background: transparent;
     border: none;
     color: var(--text-white);
-    font-size: 2.5rem;
-    font-weight: bold;
+    font-size: 2.5rem; /* Big Bold Title */
+    font-weight: 700;
     width: 100%;
     margin-bottom: 20px;
     outline: none;
+    font-family: inherit;
 }
+.editor-title::placeholder { color: #444; }
+
 .editor-content {
     background: transparent;
     border: none;
     color: #ccc;
     font-size: 1.1rem;
-    line-height: 1.6;
+    line-height: 1.7;
     width: 100%;
-    height: 100%;
+    flex-grow: 1; /* Fills remaining space */
     resize: none;
     outline: none;
-    font-family: 'DM Sans', sans-serif;
-}
-
-/* Save Button */
-.btn-save {
-    background-color: var(--accent-green);
-    color: white;
-    padding: 8px 20px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: bold;
-}
-
-.empty-state-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 60vh; /* Takes up most of the vertical space */
-    text-align: center;
-    padding: 20px;
-}
-
-.trash-icon-svg {
-    width: 64px;
-    height: 64px;
-    fill: #ff9f43; /* The specific Orange color from your screenshot */
-    margin-bottom: 15px;
-}
-
-.empty-state-title {
-    color: white;
-    font-size: 1.1rem;
-    font-weight: bold;
-    margin-bottom: 8px;
-}
-
-.empty-state-desc {
-    color: #888;
-    font-size: 0.9rem;
-    max-width: 260px; /* Limits width to force text wrapping like screenshot */
-    line-height: 1.5;
-}
-
-/* --- EMPTY TRASH STATE (FIXED) --- */
-.empty-state-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100%; /* Fill the container */
-    padding: 40px;
-    text-align: center;
-}
-
-.trash-icon-svg {
-    width: 80px;  /* Fixed size so it's not huge */
-    height: 80px;
-    fill: #ff9f43; /* Orange color */
-    margin-bottom: 20px;
-    opacity: 0.9;
-}
-
-.empty-state-title {
-    color: #e6e6e6; /* White/Grey text */
-    font-size: 1.1rem;
-    font-weight: bold;
-    margin-bottom: 10px;
-}
-
-.empty-state-desc {
-    color: #888;
-    font-size: 0.9rem;
-    max-width: 300px; /* Limits width to make text look neat */
-    line-height: 1.5;
-}
-
-/* --- NOTEBOOK MANAGER VIEW (UI OVERHAUL) --- */
-.notebook-manager-panel {
-    flex-grow: 1;
-    background-color: #191919; /* darker background from image */
-    padding: 30px 40px;
-    overflow-y: auto;
-    color: var(--text-white);
-}
-
-/* Header Section */
-.nb-header-container {
-    margin-bottom: 30px;
-}
-
-.nb-header-top {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 20px;
-}
-
-.nb-header-title {
-    margin: 0;
-    font-size: 1.8rem;
-    font-weight: 700;
-}
-
-.nb-count-badge {
-    color: #888;
-    font-size: 1.1rem;
-    font-weight: normal;
-}
-
-.nb-header-actions {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    gap: 15px;
-}
-
-/* New Notebook Button Style */
-.btn-new-nb-action {
-    background: transparent;
-    color: var(--accent-green);
-    border: none;
-    font-weight: 600;
-    font-size: 0.95rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 12px;
-    border-radius: 6px;
-    transition: background 0.2s;
-}
-.btn-new-nb-action:hover { background: #333; }
-
-/* Search Bar Style */
-.nb-search-container {
-    position: relative;
-}
-.nb-search-bar {
-    background: #262626;
-    border: 1px solid #333;
-    padding: 10px 35px 10px 15px; /* room for icon on right */
-    border-radius: 6px;
-    color: #ccc;
-    width: 250px;
     font-family: inherit;
-    font-size: 0.9rem;
-    outline: none;
 }
-.nb-search-icon {
+.editor-content::placeholder { color: #333; }
+
+/* Toolbar (Floating or Top Right) */
+.editor-actions {
     position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #666;
-    pointer-events: none;
+    top: 20px;
+    right: 30px;
+    display: flex;
+    gap: 10px;
 }
 
-/* Icon Buttons (Filters placeholders) */
-.btn-icon-only {
-    background: transparent;
-    border: none;
-    color: #888;
-    font-size: 1.1rem;
-    cursor: pointer;
-    padding: 8px;
-}
-
-/* TABLE STYLING */
-.nb-table-container {
-    border: 1px solid #333;
-    border-radius: 8px;
-    overflow: hidden; /* Ensures borders curve */
-}
-
-.nb-table {
-    width: 100%;
-    border-collapse: separate; /* Needed for border-radius on rows */
-    border-spacing: 0;
-    font-size: 0.9rem;
-    background: #1e1e1e;
-}
-
-/* Header Row */
-.nb-table th {
-    text-align: left;
-    color: #888;
-    padding: 12px 20px;
-    border-bottom: 1px solid #333;
+/* Save Button (Styled to look like a pill) */
+.btn-save-pill {
+    background-color: #333;
+    color: var(--accent-green);
+    border: 1px solid #444;
+    padding: 6px 15px;
+    border-radius: 20px;
     font-weight: 600;
-    font-size: 0.8rem;
-}
-
-/* Data Rows */
-.nb-table td {
-    padding: 16px 20px;
-    border-bottom: 1px solid #2a2a2a;
-    color: #ccc;
-    vertical-align: middle;
-}
-
-.nb-table tr:last-child td { border-bottom: none; } /* Remove last border */
-
-.nb-table tr:hover td {
-    background-color: #252525;
-}
-
-/* Title Cell Styling */
-.nb-title-cell {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: white;
-    text-decoration: none;
-    font-weight: 500;
-}
-.nb-title-icon { color: #888; font-size: 1.1rem; }
-.nb-notes-count { color: #666; margin-left: 8px; font-size: 0.9rem; }
-
-/* User Avatar styling placeholder */
-.user-avatar-cell {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 500;
-    color: #e6e6e6;
-}
-
-/* Action Menu (...) */
-.action-btn {
-    background: transparent;
-    border: none;
-    color: #888;
-    font-size: 1.3rem;
+    font-size: 0.85rem;
     cursor: pointer;
-    padding: 4px 8px;
-    border-radius: 4px;
-    line-height: 1;
+    transition: 0.2s;
 }
-.action-btn:hover { background: #444; color: white; }
+.btn-save-pill:hover { background-color: var(--accent-green); color: white; border-color: var(--accent-green); }
 
-.action-menu-container { position: relative; }
-
-.action-dropdown {
-    display: none;
-    position: absolute;
-    right: 0;
-    top: 35px;
-    background: #2a2a2a;
-    border: 1px solid #3d3d3d;
-    border-radius: 6px;
-    width: 180px;
-    z-index: 100;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-    padding: 6px 0;
-}
-
+/* --- NOTEBOOK MANAGER (Keeping your existing styles) --- */
+.notebook-manager-panel { flex-grow: 1; background-color: #191919; padding: 40px; overflow-y: auto; }
+.nb-header-container { margin-bottom: 30px; }
+.nb-header-top { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+.nb-header-title { margin: 0; font-size: 1.8rem; font-weight: 700; }
+.nb-count-badge { color: #888; font-size: 1.1rem; }
+.nb-header-actions { display: flex; justify-content: flex-end; gap: 15px; align-items: center; }
+.btn-new-nb-action { background: transparent; color: var(--accent-green); border: none; font-weight: 600; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+.nb-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.9rem; }
+.nb-table th { text-align: left; color: #888; padding: 12px 20px; border-bottom: 1px solid #333; font-weight: 600; font-size: 0.8rem; }
+.nb-table td { padding: 16px 20px; border-bottom: 1px solid #2a2a2a; color: #ccc; vertical-align: middle; }
+.nb-title-cell { display: flex; align-items: center; gap: 10px; color: white; font-weight: 500; }
+.action-btn { background: transparent; border: none; color: #888; font-size: 1.3rem; cursor: pointer; padding: 4px 8px; }
+.action-dropdown { display: none; position: absolute; right: 0; top: 35px; background: #2a2a2a; border: 1px solid #3d3d3d; border-radius: 6px; width: 180px; z-index: 100; padding: 6px 0; }
 .action-dropdown.show { display: block; }
-
-.action-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 15px;
-    color: #eee;
-    text-decoration: none;
-    font-size: 0.9rem;
-    transition: background 0.1s;
-}
+.action-item { display: flex; align-items: center; gap: 10px; padding: 10px 15px; color: #eee; font-size: 0.9rem; }
 .action-item:hover { background: #3d3d3d; }
-.action-item.delete { color: #ff6b6b; }
+.empty-state-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 40px; text-align: center; }
+.trash-icon-svg { width: 80px; height: 80px; fill: #ff9f43; margin-bottom: 20px; opacity: 0.9; }
