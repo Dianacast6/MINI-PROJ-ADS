@@ -9,7 +9,7 @@ $conn->query("DELETE FROM notebooks WHERE is_trashed = 1 AND trashed_at < NOW() 
 $current_id = "";
 $current_title = "";
 $current_content = "";
-$current_notebook_name_display = "Note"; // Default
+$current_notebook_name_display = "Loose Note"; // Default
 $current_updated_at = "";
 $editor_target_notebook_id = ""; 
 $search_query = "";
@@ -107,8 +107,9 @@ $trashed_notebooks_result = false;
 if (isset($_GET['view'])) {
     if ($_GET['view'] == 'trash') {
         $view_mode = 'trash';
-        $where_clauses[] = "is_trashed = 1"; 
         $trashed_notebooks_result = $conn->query("SELECT * FROM notebooks WHERE is_trashed = 1");
+        $where_clauses[] = "is_trashed = 1"; 
+        $where_clauses[] = "(notebook_id IS NULL OR notebook_id = 0 OR notebook_id IN (SELECT id FROM notebooks WHERE is_trashed = 0))";
     } elseif ($_GET['view'] == 'notes') {
         $view_mode = 'notes';
         $where_clauses[] = "is_trashed = 0"; 
@@ -136,18 +137,12 @@ if ($view_mode == 'all') {
 }
 
 // --- 4. DATA FETCHING ---
-
-// A. Fetch Notes
 $sql_query = "SELECT * FROM notes";
 if (count($where_clauses) > 0) $sql_query .= " WHERE " . implode(' AND ', $where_clauses);
 $sql_query .= " ORDER BY created_at DESC";
 
-// B. Fetch Notebooks
 $nb_search_term = "";
-$nb_sql = "SELECT nb.*, COUNT(n.id) as note_count 
-           FROM notebooks nb 
-           LEFT JOIN notes n ON nb.id = n.notebook_id AND n.is_trashed = 0
-           WHERE nb.is_trashed = 0";
+$nb_sql = "SELECT nb.*, COUNT(n.id) as note_count FROM notebooks nb LEFT JOIN notes n ON nb.id = n.notebook_id AND n.is_trashed = 0 WHERE nb.is_trashed = 0";
 if (isset($_GET['nb_search']) && !empty($_GET['nb_search'])) {
     $nb_search_term = mysqli_real_escape_string($conn, $_GET['nb_search']);
     $nb_sql .= " AND nb.name LIKE '%$nb_search_term%'";
@@ -156,24 +151,17 @@ $nb_sql .= " GROUP BY nb.id ORDER BY nb.updated_at DESC";
 $notebooks_list = $conn->query($nb_sql);
 $total_notebooks_count = ($notebooks_list) ? $notebooks_list->num_rows : 0;
 
-// C. Fetch Single Note (UPDATED to get Notebook Name for Breadcrumbs)
 if (isset($_GET['edit'])) {
     $id = $_GET['edit'];
-    // Left Join to get Notebook Name
     $res = $conn->query("SELECT n.*, nb.name as notebook_name FROM notes n LEFT JOIN notebooks nb ON n.notebook_id = nb.id WHERE n.id=$id");
     if ($row = $res->fetch_assoc()) {
         $current_id = $row['id'];
         $current_title = $row['title'];
         $current_content = $row['content'];
         $editor_target_notebook_id = $row['notebook_id'];
-        $current_updated_at = date('M d', strtotime($row['created_at'])); // Using created for now, or update to updated_at if available
-        if ($row['notebook_name']) {
-            $current_notebook_name_display = htmlspecialchars($row['notebook_name']);
-        }
-        
-        if($row['is_trashed'] == 1 && $view_mode != 'trash') {
-            $current_id = ""; $current_title = ""; $current_content = "";
-        }
+        $current_updated_at = date('M d', strtotime($row['created_at']));
+        if ($row['notebook_name']) { $current_notebook_name_display = htmlspecialchars($row['notebook_name']); }
+        if($row['is_trashed'] == 1 && $view_mode != 'trash') { $current_id = ""; $current_title = ""; $current_content = ""; }
     }
 } else {
     if ($view_mode == 'notebook') {
@@ -185,7 +173,6 @@ if (isset($_GET['edit'])) {
 $new_note_url = "dashboard.php";
 if ($view_mode == 'notebook') $new_note_url .= "?notebook=" . $filter_notebook_id;
 elseif ($view_mode == 'notes') $new_note_url .= "?view=notes";
-
 ?>
 
 <!DOCTYPE html>
@@ -196,10 +183,30 @@ elseif ($view_mode == 'notes') $new_note_url .= "?view=notes";
     <title>Dashboard | QuickNote</title>
     <link rel="stylesheet" href="style.css">
     <script>
-        function createNotebook() {
-            let name = prompt("Enter Notebook Name:");
-            if (name) { document.getElementById('nb_name_input').value = name; document.getElementById('nb_form').submit(); }
+        // NEW MODAL LOGIC
+        function openCreateModal() {
+            document.getElementById('create-notebook-modal').classList.add('show');
+            document.getElementById('modal-nb-name').focus();
         }
+
+        function closeModal() {
+            document.getElementById('create-notebook-modal').classList.remove('show');
+            document.getElementById('modal-nb-name').value = ''; // Clear input
+            checkInput(); // Reset button state
+        }
+
+        function checkInput() {
+            const input = document.getElementById('modal-nb-name');
+            const btn = document.getElementById('btn-create-nb');
+            if (input.value.trim().length > 0) {
+                btn.classList.add('active');
+                btn.disabled = false;
+            } else {
+                btn.classList.remove('active');
+                btn.disabled = true;
+            }
+        }
+
         function renameNotebook(id, currentName) {
             let name = prompt("Rename Notebook:", currentName);
             if (name) { document.getElementById('rename_id').value = id; document.getElementById('rename_val').value = name; document.getElementById('rename_form').submit(); }
@@ -210,24 +217,44 @@ elseif ($view_mode == 'notes') $new_note_url .= "?view=notes";
         }
         window.onclick = function(event) {
             if (!event.target.matches('.action-btn')) { document.querySelectorAll('.action-dropdown').forEach(el => el.classList.remove('show')); }
+            // Close modal if clicking outside content
+            if (event.target.classList.contains('modal-overlay')) { closeModal(); }
         }
     </script>
 </head>
 <body>
 
-<form id="nb_form" method="POST" style="display:none;">
-    <input type="hidden" name="create_notebook" value="1">
-    <input type="hidden" name="notebook_name" id="nb_name_input">
-</form>
 <form id="rename_form" method="POST" style="display:none;">
     <input type="hidden" name="rename_notebook" value="1">
     <input type="hidden" name="notebook_id" id="rename_id">
     <input type="hidden" name="new_name" id="rename_val">
 </form>
 
+<div id="create-notebook-modal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Create new notebook</h3>
+            <button class="close-modal" onclick="closeModal()">×</button>
+        </div>
+        <p class="modal-desc">Notebooks are useful for grouping notes around a common topic. They can be private or shared.</p>
+        
+        <form action="dashboard.php" method="POST">
+            <input type="hidden" name="create_notebook" value="1">
+            <div style="margin-bottom:10px;">
+                <input type="text" name="notebook_name" id="modal-nb-name" class="modal-input" placeholder="Notebook name" autocomplete="off" onkeyup="checkInput()">
+            </div>
+            
+            <div class="modal-actions">
+                <button type="button" class="btn-modal-cancel" onclick="closeModal()">Cancel</button>
+                <button type="submit" class="btn-modal-create" id="btn-create-nb" disabled>Create</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div class="dashboard-container">
     
-<div class="sidebar">
+    <div class="sidebar">
         <form action="dashboard.php" method="GET">
             <?php if($filter_notebook_id): ?><input type="hidden" name="notebook" value="<?php echo $filter_notebook_id; ?>"><?php endif; ?>
             <input type="text" name="search" class="search-box" placeholder="🔍 Search notes..." value="<?php echo htmlspecialchars($search_query); ?>">
@@ -249,40 +276,54 @@ elseif ($view_mode == 'notes') $new_note_url .= "?view=notes";
             <a href="dashboard.php?view=notebooks_list" class="nav-item <?php echo ($view_mode == 'notebooks_list' || $view_mode == 'notebook') ? 'active' : ''; ?>">
                 <span class="nav-icon">📓</span> Notebooks
             </a>
-        </div> 
-        <a href="dashboard.php?view=trash" class="nav-item <?php echo ($view_mode == 'trash') ? 'active' : ''; ?>" style="margin-top:auto;">
-            <span class="nav-icon">🗑️</span> Trash
-        </a>
+            
+            <a href="dashboard.php?view=trash" class="nav-item <?php echo ($view_mode == 'trash') ? 'active' : ''; ?>" style="margin-top:auto;">
+                <span class="nav-icon">🗑️</span> Trash
+            </a>
+        </div>
     </div>
 
     <?php if ($view_mode == 'notebooks_list'): ?>
+    
     <div class="notebook-manager-panel">
         <div class="nb-header-container">
             <div class="nb-header-top">
                 <h1 class="nb-header-title">Notebooks</h1>
                 <span class="nb-count-badge"><?php echo $total_notebooks_count; ?></span>
             </div>
+            
             <div class="nb-header-actions">
-                <form action="dashboard.php" method="GET" class="nb-search-container" style="margin-right: auto;">
+                <button class="btn-new-nb-action" onclick="openCreateModal()">
+                    <span style="font-size: 1.2rem; margin-right: 5px;">+</span> New Notebook
+                </button>
+
+                <form action="dashboard.php" method="GET" class="nb-search-container">
                     <input type="hidden" name="view" value="notebooks_list">
                     <input type="text" name="nb_search" class="nb-search-bar" placeholder="Find Notebooks..." value="<?php echo htmlspecialchars($nb_search_term); ?>">
-                    <span class="nb-search-icon">🔍</span>
+                    <span class="nb-search-icon">   </span>
                 </form>
-                <button class="btn-new-nb-action" onclick="createNotebook()"><span style="font-size: 1.1rem;">+</span> New Notebook</button>
             </div>
         </div>
+
         <?php if ($total_notebooks_count > 0): ?>
         <div class="nb-table-container">
             <table class="nb-table">
                 <thead>
-                    <tr><th style="width: 45%;">Title ↑</th><th style="width: 25%;">Date Created</th><th style="width: 25%;">Date Updated</th><th style="width: 5%;"></th></tr>
+                    <tr>
+                        <th style="width: 55%;">Title ↑</th>
+                        <th style="width: 20%;">Date Created</th>
+                        <th style="width: 20%;">Date Updated</th>
+                        <th style="width: 5%;"></th>
+                    </tr>
                 </thead>
                 <tbody>
                     <?php while($nb = $notebooks_list->fetch_assoc()): ?>
                     <tr>
                         <td>
                             <a href="dashboard.php?notebook=<?php echo $nb['id']; ?>" class="nb-title-cell">
-                                <span class="nb-title-icon">📓</span> <?php echo htmlspecialchars($nb['name']); ?> <span class="nb-notes-count">(<?php echo $nb['note_count']; ?>)</span>
+                                <span class="nb-title-icon">📓</span> 
+                                <?php echo htmlspecialchars($nb['name']); ?>
+                                <span class="nb-notes-count">(<?php echo $nb['note_count']; ?>)</span>
                             </a>
                         </td>
                         <td><?php echo date('M d, Y', strtotime($nb['created_at'])); ?></td>
@@ -307,7 +348,7 @@ elseif ($view_mode == 'notes') $new_note_url .= "?view=notes";
             <div class="empty-state-container">
                 <div class="empty-state-title">No Notebooks Found</div>
                 <div class="empty-state-desc">Create a notebook to organize your notes.</div>
-                <button class="btn-new" style="width:auto; margin-top:20px; padding: 10px 30px;" onclick="createNotebook()">Create Notebook</button>
+                <button class="btn-save" style="margin-top:20px;" onclick="openCreateModal()">Create Notebook</button>
             </div>
         <?php endif; ?>
     </div>
@@ -325,52 +366,99 @@ elseif ($view_mode == 'notes') $new_note_url .= "?view=notes";
                 else echo "Home"; 
                 ?>
             </h2>
-            <?php if($view_mode != 'trash'): ?><span class="note-count"><?php echo $conn->query($sql_query)->num_rows; ?> notes</span><?php endif; ?>
+            <?php if($view_mode != 'trash'): ?>
+                <span class="note-count"><?php echo $conn->query($sql_query)->num_rows; ?> notes</span>
+            <?php endif; ?>
         </div>
+        
         <div class="note-items-container">
             <?php
             $has_items = false;
-            // Trashed Notebooks (Only in trash view)
+
+            // 1. TRASHED NOTEBOOKS SECTION
             if($view_mode == 'trash' && $trashed_notebooks_result && $trashed_notebooks_result->num_rows > 0) {
                 $has_items = true;
-                echo "<div style='padding:10px 20px; font-size:0.8rem; color:#888; text-transform:uppercase;'>Notebooks</div>";
+                echo "<div style='padding:15px 20px 5px; font-size:0.75rem; color:#666; text-transform:uppercase; letter-spacing:1px;'>NOTEBOOKS</div>";
+                
                 while($nb = $trashed_notebooks_result->fetch_assoc()) {
-                   echo "<div class='note-item' style='border-left: 4px solid orange; background:#222;'><h4 style='margin:0; color:#ddd;'>📓 ".htmlspecialchars($nb['name'])."</h4><div style='margin-top:10px; display:flex; gap:10px;'><a href='dashboard.php?restore_notebook={$nb['id']}' style='color:var(--accent-green); font-size:0.8rem;'>♻ Restore</a><a href='dashboard.php?delete_notebook_forever={$nb['id']}' onclick='return confirm(\"Delete forever?\")' style='color:#e74c3c; font-size:0.8rem;'>✖ Delete</a></div></div>";
+                   // Nested notes inside deleted notebook
+                   $nb_notes_res = $conn->query("SELECT * FROM notes WHERE notebook_id = {$nb['id']}");
+                   ?>
+                   <div style="border-bottom: 1px solid #333; background:#222;">
+                       <div style="padding: 15px 20px; display:flex; justify-content:space-between; align-items:center;">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span style="font-size:1.1rem;">📓</span>
+                                <h4 style="margin:0; color:#eee; font-weight:500; font-size:0.95rem;"><?php echo htmlspecialchars($nb['name']); ?></h4>
+                            </div>
+                            <div style="display:flex; gap:10px;">
+                                <a href="dashboard.php?restore_notebook=<?php echo $nb['id']; ?>" style="color:var(--accent-green); font-size:0.8rem; text-decoration:none;">♻ Restore</a>
+                                <a href="dashboard.php?delete_notebook_forever=<?php echo $nb['id']; ?>" onclick="return confirm('Permanently delete?')" style="color:#e74c3c; font-size:0.8rem; text-decoration:none;">✖ Delete</a>
+                            </div>
+                       </div>
+                       <?php if($nb_notes_res->num_rows > 0): ?>
+                           <div style="background:#1a1a1a; padding: 5px 0;">
+                               <?php while($n_row = $nb_notes_res->fetch_assoc()): ?>
+                                   <div style="padding: 8px 20px 8px 45px; display:flex; align-items:center; gap:10px; border-bottom:1px solid #2a2a2a;">
+                                       <span style="font-size:0.8rem;">📄</span>
+                                       <span style="color:#888; font-size:0.85rem;"><?php echo $n_row['title'] ? htmlspecialchars($n_row['title']) : 'Untitled'; ?></span>
+                                   </div>
+                               <?php endwhile; ?>
+                           </div>
+                       <?php else: ?>
+                           <div style="padding: 5px 20px 10px 45px; color:#555; font-size:0.8rem; font-style:italic;">Empty notebook</div>
+                       <?php endif; ?>
+                   </div>
+                   <?php
                 }
-                echo "<hr style='border:0; border-top:1px solid #333; margin:0;'>";
             }
-            
-            // Notes List
+
+            // 2. TRASHED NOTES SECTION
             $result = $conn->query($sql_query);
             if ($result->num_rows > 0) {
                 $has_items = true;
+                if($view_mode == 'trash') echo "<div style='padding:25px 20px 5px; font-size:0.75rem; color:#666; text-transform:uppercase; letter-spacing:1px;'>NOTES</div>";
+                
                 while($row = $result->fetch_assoc()) {
                     $active_class = ($row['id'] == $current_id) ? 'selected' : '';
                     $edit_url = "dashboard.php?edit=" . $row['id'];
-                    // Construct URL to maintain view state
                     if($view_mode == 'notebook') $edit_url .= "&notebook=" . $filter_notebook_id;
                     if($view_mode == 'trash') $edit_url .= "&view=trash"; 
                     if($view_mode == 'notes') $edit_url .= "&view=notes";
                     
-                    // Snippet generation
+                    $trash_url = "dashboard.php?trash_id=" . $row['id'];
+                    if($view_mode == 'notebook') $trash_url .= "&notebook=" . $filter_notebook_id;
+                    if($view_mode == 'notes') $trash_url .= "&view=notes";
+
                     $snippet = substr(strip_tags($row['content']), 0, 50);
                     if(strlen($row['content']) > 50) $snippet .= "...";
                     if(!$snippet) $snippet = "No additional text";
-                    
+
                     ?>
                     <div class="note-item <?php echo $active_class; ?>" onclick="window.location.href='<?php echo $edit_url; ?>'">
-                        <h4><?php echo $row['title'] ? htmlspecialchars($row['title']) : 'Untitled'; ?></h4>
+                        <div style="display:flex; justify-content:space-between;">
+                            <h4 style="flex-grow:1;"><?php echo $row['title'] ? htmlspecialchars($row['title']) : 'Untitled'; ?></h4>
+                            <?php if($view_mode != 'trash'): ?>
+                            <a href="<?php echo $trash_url; ?>" onclick="event.stopPropagation(); return confirm('Move to Trash?');" style="color:#666; padding:0 5px; text-decoration:none;">🗑️</a>
+                            <?php endif; ?>
+                        </div>
                         <p class="note-snippet"><?php echo $snippet; ?></p>
                         <span class="note-meta">
-                            <?php echo ($view_mode == 'trash') ? "<span style='color:orange;'>In Trash</span>" : date('M d', strtotime($row['created_at'])); ?>
+                            <?php 
+                                if($view_mode == 'trash') echo "<span style='color:orange;'>In Trash</span>";
+                                else echo date('M d', strtotime($row['created_at'])); 
+                            ?>
                         </span>
                     </div>
                     <?php
                 }
             } 
+            
             if (!$has_items) {
-                if($view_mode == 'trash') echo '<div class="empty-state-container"><svg class="trash-icon-svg" viewBox="0 0 24 24"><path d="M19 6h-3.5l-1-1h-5l-1 1H5v2h14V6zM6 9v11a2 2 0 002 2h8a2 2 0 002-2V9H6z"/></svg><div class="empty-state-title">Your trash is empty</div></div>';
-                else echo "<p style='padding:20px; color:#666;'>No notes found.</p>";
+                if($view_mode == 'trash') {
+                    echo '<div class="empty-state-container"><svg class="trash-icon-svg" viewBox="0 0 24 24"><path d="M19 6h-3.5l-1-1h-5l-1 1H5v2h14V6zM6 9v11a2 2 0 002 2h8a2 2 0 002-2V9H6z"/></svg><div class="empty-state-title">Your trash is empty</div></div>';
+                } else {
+                    echo "<p style='padding:20px; color:#666;'>No notes found.</p>";
+                }
             }
             ?>
         </div>
@@ -380,20 +468,33 @@ elseif ($view_mode == 'notes') $new_note_url .= "?view=notes";
         <form action="dashboard.php<?php 
             if($filter_notebook_id) echo '?notebook='.$filter_notebook_id; 
             elseif($view_mode == 'notes') echo '?view=notes';
-        ?>" method="POST" class="editor-form">
+        ?>" method="POST" style="height:100%; display:flex; flex-direction:column;">
             
-            <div class="editor-actions">
+            <div class="editor-toolbar">
                 <?php if ($view_mode == 'trash'): ?>
                     <input type="hidden" name="is_trash_mode" value="1">
                     <?php if ($current_id): ?>
-                        <span style="color:orange; font-size:0.9rem; margin-right:10px;">⚠ In Trash</span>
-                        <a href="dashboard.php?restore_id=<?php echo $current_id; ?>" class="btn-save-pill" style="border-color:var(--accent-green);">Restore</a>
-                        <a href="dashboard.php?delete_forever=<?php echo $current_id; ?>" onclick="return confirm('Permanently delete?')" class="btn-save-pill" style="color:red; border-color:red;">Delete</a>
+                        <div style="margin-right:auto;">
+                            <span style="color:orange;">⚠ In Trash</span>
+                            <a href="dashboard.php?restore_id=<?php echo $current_id; ?>" style="color:var(--accent-green); margin-left:15px; text-decoration:none;">♻ Restore</a>
+                        </div>
+                        <a href="dashboard.php?delete_forever=<?php echo $current_id; ?>" onclick="return confirm('Permanently delete?')" style="color:red; text-decoration:none;">✖ Delete Forever</a>
                     <?php endif; ?>
                 <?php else: ?>
-                    <input type="hidden" name="notebook_id" value="<?php echo ($current_id ? $editor_target_notebook_id : ($view_mode == 'notebook' ? $filter_notebook_id : 0)); ?>">
+                    
+                    <?php 
+                    $display_label = "All Notes"; $display_icon = "📝"; $save_notebook_id = "0"; 
+                    if ($view_mode == 'notebook') { $display_label = htmlspecialchars($filter_notebook_name); $display_icon = "📓"; $save_notebook_id = $filter_notebook_id; }
+                    elseif ($view_mode == 'notes') { $display_label = "Notes"; $display_icon = "📄"; $save_notebook_id = ($current_id) ? $editor_target_notebook_id : "0"; }
+                    else { $save_notebook_id = ($current_id) ? $editor_target_notebook_id : "0"; }
+                    ?>
+                    
+                    <span style="background:#333; color:#aaa; padding:6px 12px; border-radius:4px; font-size:0.9rem; user-select: none;">
+                        <?php echo $display_icon . " " . $display_label; ?>
+                    </span>
+                    <input type="hidden" name="notebook_id" value="<?php echo $save_notebook_id; ?>">
                     <?php if($current_id): ?>
-                        <a href="dashboard.php?trash_id=<?php echo $current_id; ?>" class="btn-save-pill" style="background:transparent; border:none; color:#666; font-size:1.2rem;">🗑️</a>
+                        <a href="dashboard.php?trash_id=<?php echo $current_id; ?>" style="color:#666; text-decoration:none; margin-left:10px; font-size:1.2rem;">🗑️</a>
                     <?php endif; ?>
                     <button type="submit" name="save_note" class="btn-save-pill">Save Note</button>
                 <?php endif; ?>
@@ -417,5 +518,6 @@ elseif ($view_mode == 'notes') $new_note_url .= "?view=notes";
     <?php endif; ?>
 
 </div>
+
 </body>
 </html>
