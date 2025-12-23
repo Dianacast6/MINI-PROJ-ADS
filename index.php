@@ -14,7 +14,7 @@
         </div>
         <div>
             <a href="#" style="color:#333; margin-right: 20px; text-decoration:none;">Log in</a>
-            <a href="dashboard.php" class="btn-black" style="padding: 10px 20px; font-size: 0.9rem;">Download</a>
+            <a href="dashboard.php" class="btn-black" style="padding: 10px 20px; font-size: 0.9rem;">Explore</a>
         </div>
     </nav>
 

@@ -384,6 +384,7 @@ elseif ($view_mode == 'notes') $new_note_url .= "?view=notes";
                    // Nested notes inside deleted notebook
                    $nb_notes_res = $conn->query("SELECT * FROM notes WHERE notebook_id = {$nb['id']}");
                    ?>
+                   
                    <div style="border-bottom: 1px solid #333; background:#222;">
                        <div style="padding: 15px 20px; display:flex; justify-content:space-between; align-items:center;">
                             <div style="display:flex; align-items:center; gap:8px;">
@@ -395,13 +396,19 @@ elseif ($view_mode == 'notes') $new_note_url .= "?view=notes";
                                 <a href="dashboard.php?delete_notebook_forever=<?php echo $nb['id']; ?>" onclick="return confirm('Permanently delete?')" style="color:#e74c3c; font-size:0.8rem; text-decoration:none;">✖ Delete</a>
                             </div>
                        </div>
+
                        <?php if($nb_notes_res->num_rows > 0): ?>
                            <div style="background:#1a1a1a; padding: 5px 0;">
-                               <?php while($n_row = $nb_notes_res->fetch_assoc()): ?>
-                                   <div style="padding: 8px 20px 8px 45px; display:flex; align-items:center; gap:10px; border-bottom:1px solid #2a2a2a;">
+                               <?php while($n_row = $nb_notes_res->fetch_assoc()): 
+                                   // Check if this specific note is currently open in the editor
+                                   $is_active = ($current_id == $n_row['id']) ? 'active' : '';
+                                   // Link to open note in READ ONLY mode
+                                   $trash_link = "dashboard.php?edit=" . $n_row['id'] . "&view=trash";
+                               ?>
+                                   <a href="<?php echo $trash_link; ?>" class="trash-nested-note <?php echo $is_active; ?>">
                                        <span style="font-size:0.8rem;">📄</span>
-                                       <span style="color:#888; font-size:0.85rem;"><?php echo $n_row['title'] ? htmlspecialchars($n_row['title']) : 'Untitled'; ?></span>
-                                   </div>
+                                       <span><?php echo $n_row['title'] ? htmlspecialchars($n_row['title']) : 'Untitled'; ?></span>
+                                   </a>
                                <?php endwhile; ?>
                            </div>
                        <?php else: ?>
@@ -410,6 +417,7 @@ elseif ($view_mode == 'notes') $new_note_url .= "?view=notes";
                    </div>
                    <?php
                 }
+                echo "<hr style='border:0; border-top:1px solid #333; margin:0;'>";
             }
 
             // 2. TRASHED NOTES SECTION
@@ -470,45 +478,49 @@ elseif ($view_mode == 'notes') $new_note_url .= "?view=notes";
             elseif($view_mode == 'notes') echo '?view=notes';
         ?>" method="POST" style="height:100%; display:flex; flex-direction:column;">
             
-            <div class="editor-toolbar">
-                <?php if ($view_mode == 'trash'): ?>
-                    <input type="hidden" name="is_trash_mode" value="1">
-                    <?php if ($current_id): ?>
-                        <div style="margin-right:auto;">
-                            <span style="color:orange;">⚠ In Trash</span>
-                            <a href="dashboard.php?restore_id=<?php echo $current_id; ?>" style="color:var(--accent-green); margin-left:15px; text-decoration:none;">♻ Restore</a>
-                        </div>
-                        <a href="dashboard.php?delete_forever=<?php echo $current_id; ?>" onclick="return confirm('Permanently delete?')" style="color:red; text-decoration:none;">✖ Delete Forever</a>
-                    <?php endif; ?>
-                <?php else: ?>
-                    
-                    <?php 
-                    $display_label = "All Notes"; $display_icon = "📝"; $save_notebook_id = "0"; 
-                    if ($view_mode == 'notebook') { $display_label = htmlspecialchars($filter_notebook_name); $display_icon = "📓"; $save_notebook_id = $filter_notebook_id; }
-                    elseif ($view_mode == 'notes') { $display_label = "Notes"; $display_icon = "📄"; $save_notebook_id = ($current_id) ? $editor_target_notebook_id : "0"; }
-                    else { $save_notebook_id = ($current_id) ? $editor_target_notebook_id : "0"; }
-                    ?>
-                    
-                    <span style="background:#333; color:#aaa; padding:6px 12px; border-radius:4px; font-size:0.9rem; user-select: none;">
-                        <?php echo $display_icon . " " . $display_label; ?>
-                    </span>
-                    <input type="hidden" name="notebook_id" value="<?php echo $save_notebook_id; ?>">
-                    <?php if($current_id): ?>
-                        <a href="dashboard.php?trash_id=<?php echo $current_id; ?>" style="color:#666; text-decoration:none; margin-left:10px; font-size:1.2rem;">🗑️</a>
-                    <?php endif; ?>
-                    <button type="submit" name="save_note" class="btn-save-pill">Save Note</button>
-                <?php endif; ?>
-            </div>
-
-            <div class="editor-header-info">
-                <div class="breadcrumbs">
-                    <span class="notebook-name">📓 <?php echo htmlspecialchars($current_notebook_name_display); ?></span>
-                    <span>›</span>
-                    <span><?php echo $current_title ? htmlspecialchars($current_title) : "Untitled"; ?></span>
+            <div class="editor-top-bar">
+                
+                <div class="editor-header-info">
+                    <div class="breadcrumbs">
+                        <span class="notebook-name">📓 <?php echo htmlspecialchars($current_notebook_name_display); ?></span>
+                        <span>›</span>
+                        <span><?php echo $current_title ? htmlspecialchars($current_title) : "Untitled"; ?></span>
+                    </div>
+                    <div class="last-edited">Edited <?php echo $current_updated_at ? $current_updated_at : "just now"; ?></div>
                 </div>
-                <div class="last-edited">Edited <?php echo $current_updated_at ? $current_updated_at : "just now"; ?></div>
-            </div>
 
+                <div class="editor-actions">
+                    <?php if ($view_mode == 'trash'): ?>
+                        <input type="hidden" name="is_trash_mode" value="1">
+                        <?php if ($current_id): ?>
+                            <span style="color:orange; font-size:0.9rem; margin-right:10px;">⚠ In Trash</span>
+                            <a href="dashboard.php?restore_id=<?php echo $current_id; ?>" class="btn-save-pill" style="border-color:var(--accent-green);">Restore</a>
+                            <a href="dashboard.php?delete_forever=<?php echo $current_id; ?>" onclick="return confirm('Permanently delete?')" class="btn-save-pill" style="color:red; border-color:red;">Delete</a>
+                        <?php endif; ?>
+                    <?php else: ?>
+                        
+                        <?php 
+                        $display_label = "All Notes"; $display_icon = "📝"; $save_notebook_id = "0"; 
+                        if ($view_mode == 'notebook') { $display_label = htmlspecialchars($filter_notebook_name); $display_icon = "📓"; $save_notebook_id = $filter_notebook_id; }
+                        elseif ($view_mode == 'notes') { $display_label = "Notes"; $display_icon = "📄"; $save_notebook_id = ($current_id) ? $editor_target_notebook_id : "0"; }
+                        else { $save_notebook_id = ($current_id) ? $editor_target_notebook_id : "0"; }
+                        ?>
+                        
+                        <span class="notebook-badge">
+                            <?php echo $display_icon . " " . $display_label; ?>
+                        </span>
+                        
+                        <input type="hidden" name="notebook_id" value="<?php echo $save_notebook_id; ?>">
+
+                        <?php if($current_id): ?>
+                            <a href="dashboard.php?trash_id=<?php echo $current_id; ?>" class="btn-icon-trash">🗑️</a>
+                        <?php endif; ?>
+                        
+                        <button type="submit" name="save_note" class="btn-save-green">Save Note</button>
+                    <?php endif; ?>
+                </div>
+
+            </div>
             <input type="hidden" name="id" value="<?php echo $current_id; ?>">
             <input type="text" name="title" class="editor-title" placeholder="Title" value="<?php echo htmlspecialchars($current_title); ?>" <?php echo ($view_mode=='trash') ? 'readonly' : ''; ?>>
             <textarea name="content" class="editor-content" placeholder="Start writing..." <?php echo ($view_mode=='trash') ? 'readonly' : ''; ?>><?php echo htmlspecialchars($current_content); ?></textarea>
