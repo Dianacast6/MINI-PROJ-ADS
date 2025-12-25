@@ -1,5 +1,5 @@
 <?php
-include 'db.php';
+include 'config/db.php';
 
 // 1. Create users table
 $sql = "CREATE TABLE IF NOT EXISTS users (

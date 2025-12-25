@@ -1,5 +1,5 @@
 <?php
-include 'db.php';
+include 'config/db.php';
 session_start();
 
 $error = "";
@@ -39,7 +39,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
     <meta charset="UTF-8">
     <title>Register | QuickNote</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="assets/css/style.css">
     <style>
         body {
             display: flex;

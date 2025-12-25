@@ -1,5 +1,5 @@
 <?php
-include 'db.php';
+include 'config/db.php';
 
 session_start();
 if(!isset($_SESSION['user_id'])) {
@@ -389,7 +389,7 @@ elseif ($view_mode == 'notes')
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard | QuickNote</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="assets/css/style.css">
     <!-- Quill CSS -->
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <style>
