@@ -40,7 +40,7 @@ session_start();
             <?php if (isset($_SESSION['user_id'])): ?>
                 <a href="dashboard.php" class="btn-primary">Go to Dashboard</a>
             <?php else: ?>
-                <a href="register.php" class="btn-primary">Start for Free</a>
+                <a href="register.php" class="btn-primary">Start now</a>
                 <a href="login.php" class="btn-secondary">Log In</a>
             <?php endif; ?>
         </div>

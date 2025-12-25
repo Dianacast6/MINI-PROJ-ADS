@@ -187,6 +187,55 @@ footer::before {
   position: relative;
 }
 
+/* AUTH BACK BUTTON */
+.auth-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.5) !important;
+  text-decoration: none !important;
+  font-size: 0.9rem;
+  margin-bottom: 20px; /* Reduced from 30px */
+  transition: all 0.3s ease;
+}
+
+.auth-back-btn:hover {
+  color: var(--accent-primary) !important;
+  transform: translateX(-5px);
+}
+
+/* AUTH GRID FOR COMPACT LAYOUT */
+.auth-grid-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+@media (max-width: 768px) {
+  .auth-grid-row {
+    grid-template-columns: 1fr; /* Stack on mobile */
+  }
+}
+
+.auth-form-group {
+  margin-bottom: 20px;
+}
+
+/* Make register page more compact */
+form[action*="register"] .auth-form-group {
+  margin-bottom: 12px; /* Reduced from 15px */
+}
+
+/* Compact header for register page to save space */
+body:has(form[action*="register"]) .auth-header h2 {
+  font-size: 1.8rem;
+  margin-bottom: 5px;
+}
+body:has(form[action*="register"]) .auth-header p {
+  font-size: 0.9rem;
+  margin-bottom: 15px;
+}
+
 .footer-col ul li a:hover {
   color: var(--accent-primary);
   transform: translateX(8px);
@@ -719,5 +768,269 @@ footer::before {
   .privacy-sidebar,
   .terms-sidebar {
     display: none;
+  }
+}
+
+/* --- AUTH PAGES (Login/Register) - SPLIT LAYOUT --- */
+.auth-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 20px;
+  position: relative;
+  z-index: 1;
+}
+
+.auth-split-card {
+  display: flex;
+  background: rgba(30, 30, 30, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  width: 100%;
+  max-width: 1200px; /* Increased from 1000px to 1200px */
+  min-height: 500px; /* Reduced from 600px to fit smaller screens better */
+  overflow: hidden; /* Keeps the visual side contained */
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  animation: fadeIn 0.8s ease-out;
+}
+
+/* LEFT SIDE: FORM */
+.auth-form-side {
+  flex: 1;
+  padding: 40px; /* Reduced from 60px to fit taller forms like Register */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+  overflow-y: auto; /* Allow scroll if content is too tall (small screens/long forms) */
+  max-height: 100%; /* Ensure it respects the parent height */
+}
+
+/* Scrollbar tweaks for form side */
+.auth-form-side::-webkit-scrollbar {
+  width: 6px;
+}
+.auth-form-side::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+.auth-form-side::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.auth-header {
+  margin-bottom: 40px;
+}
+
+.auth-header h2 {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 2.5rem;
+  color: #fff;
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+
+.auth-header p {
+  color: #888;
+  font-size: 1rem;
+}
+
+.auth-form-group {
+  margin-bottom: 25px;
+  position: relative;
+}
+
+.auth-label {
+  display: block;
+  color: #aaa;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-left: 5px;
+}
+
+.auth-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  padding: 16px 20px;
+  font-size: 1rem;
+  border-radius: 12px;
+  font-family: "Outfit", sans-serif;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.auth-input:focus {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 15px rgba(0, 210, 106, 0.15);
+}
+
+.password-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.password-wrapper .auth-input {
+  padding-right: 40px; /* Make space for the icon */
+}
+
+.toggle-password {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #888;
+  user-select: none;
+  transition: color 0.3s;
+}
+
+.toggle-password:hover {
+  color: var(--accent-primary);
+}
+
+/* AUTH BUTTON */
+.auth-btn {
+  width: 100%;
+  padding: 12px; /* Reduced from 16px */
+  background: var(--accent-primary);
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 5px;
+  font-family: "Space Grotesk", sans-serif;
+  letter-spacing: 0.5px;
+}
+
+.auth-btn:hover {
+  background: #00e074;
+  transform: translateY(-2px);
+  box-shadow: 0 0 30px rgba(0, 210, 106, 0.4);
+}
+
+.auth-footer {
+  text-align: center;
+  margin-top: 30px;
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.auth-footer a {
+  color: var(--accent-primary);
+  text-decoration: none;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+.auth-footer a:hover {
+  text-decoration: underline;
+}
+
+/* RIGHT SIDE: VISUAL */
+/* RIGHT SIDE: VISUAL */
+.auth-visual-side {
+  flex: 1;
+  /* Brighter spotlight center */
+  background: radial-gradient(
+    circle at center,
+    #2a4e31 0%,
+    #0a0a0a 70%,
+    #000 100%
+  );
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  padding: 60px;
+  overflow: hidden;
+}
+
+/* More Visible Tech Grid Pattern */
+.auth-visual-side::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: linear-gradient(
+      rgba(255, 255, 255, 0.1) 1px,
+      transparent 1px
+    ),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity: 0.5;
+  z-index: 0;
+}
+
+/* Stronger Glow Blob behind the model */
+.auth-visual-side::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(
+    circle,
+    rgba(0, 210, 106, 0.25) 0%,
+    transparent 70%
+  );
+  filter: blur(60px);
+  z-index: 0;
+  animation: pulseGlow 5s infinite alternate;
+}
+
+.visual-content {
+  position: relative;
+  z-index: 2;
+  color: #fff;
+}
+
+.visual-content h3 {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 2.5rem;
+  margin-bottom: 20px;
+  line-height: 1.1;
+}
+
+.visual-content p {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.error-msg {
+  background: rgba(255, 95, 86, 0.1);
+  color: #ff5f56;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  margin-bottom: 25px;
+  text-align: center;
+  border: 1px solid rgba(255, 95, 86, 0.2);
+}
+
+@media (max-width: 900px) {
+  .auth-split-card {
+    flex-direction: column;
+    max-width: 500px;
+  }
+  .auth-visual-side {
+    display: none; /* Hide visual on mobile for compactness */
+  }
+  .auth-form-side {
+    padding: 40px;
   }
 }

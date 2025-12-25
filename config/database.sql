@@ -1,29 +1,31 @@
 CREATE DATABASE IF NOT EXISTS quicknote_db;
 USE quicknote_db;
--- 1. Create the Notebooks Table
+-- 1. Create the Users Table
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    reset_token VARCHAR(255) DEFAULT NULL,
+    reset_expiry DATETIME DEFAULT NULL
+);
+-- 2. Create the Notebooks Table
 CREATE TABLE IF NOT EXISTS notebooks (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
     name VARCHAR(100) NOT NULL,
-    space_name VARCHAR(50) DEFAULT 'Personal',
-    created_by_user VARCHAR(100) DEFAULT NULL,
+    description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT NULL,
-    is_trashed TINYINT(1) DEFAULT 0,
-    trashed_at DATETIME DEFAULT NULL
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
--- 2. Update Notes Table to support Notebooks
+-- 3. Create the Notes Table
 CREATE TABLE IF NOT EXISTS notes (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    notebook_id INT NOT NULL,
     title VARCHAR(255) NOT NULL,
-    content MEDIUMTEXT,
-    notebook_id INT DEFAULT NULL,
+    content LONGTEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    is_trashed TINYINT(1) DEFAULT 0,
-    trashed_at DATETIME DEFAULT NULL,
-    FOREIGN KEY (notebook_id) REFERENCES notebooks(id) ON DELETE
-    SET NULL
+    FOREIGN KEY (notebook_id) REFERENCES notebooks(id) ON DELETE CASCADE
 );
--- 3. Dummy Data (Optional)
--- INSERT INTO notebooks (name, space_name, created_by_user) VALUES ('School Work', 'Personal', 'dianacast555');
--- INSERT INTO notes (title, content, notebook_id) VALUES ('Math Homework', 'Algebra notes...', 1);
