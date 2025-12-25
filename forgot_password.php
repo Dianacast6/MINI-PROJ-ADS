@@ -96,7 +96,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <form method="POST" action="">
                     <div class="auth-form-group">
                         <label class="auth-label">Email Address</label>
-                        <input type="email" name="email" class="auth-input" placeholder="john@example.com" required>
+                        <input type="email" name="email" class="auth-input" placeholder="diane@example.com" required>
                     </div>
 
                     <button type="submit" class="auth-btn">RESET PASSWORD</button>

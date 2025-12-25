@@ -86,12 +86,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <div class="auth-grid-row">
                         <div class="auth-form-group">
                             <label class="auth-label">Username</label>
-                            <input type="text" name="username" class="auth-input" placeholder="johndoe" required>
+                            <input type="text" name="username" class="auth-input" placeholder="diane" required>
                         </div>
 
                         <div class="auth-form-group">
                             <label class="auth-label">Email Address</label>
-                            <input type="email" name="email" class="auth-input" placeholder="john@example.com" required>
+                            <input type="email" name="email" class="auth-input" placeholder="diane@example.com" required>
                         </div>
                     </div>
 
