@@ -14,7 +14,7 @@ if (in_array($_SERVER['REMOTE_ADDR'], $whitelist) || $_SERVER['SERVER_NAME'] == 
     // InfinityFree Deployment
     $servername = "sql305.infinityfree.com";
     $username = "if0_40760361";
-    $password = "v8DVyYWMwrkFJ6A";
+    $password = "v8DVyYWMWrkFJ6A";
     $dbname = "if0_40760361_quicknote_db";
 }
 

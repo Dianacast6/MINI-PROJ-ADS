@@ -1,37 +1,41 @@
-<?php
+// DEBUGGING: Enable error reporting for InfinityFree
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 include 'config/db.php';
 session_start();
 
 $error = "";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $emailOrUser = trim(mysqli_real_escape_string($conn, $_POST['email']));
-    $password = $_POST['password'];
+$emailOrUser = trim(mysqli_real_escape_string($conn, $_POST['email']));
+$password = $_POST['password'];
 
-    if (empty($emailOrUser) || empty($password)) {
-        $error = "Please fill in all fields.";
-    } else {
-        // Allow login via Email OR Username (Case-Insensitive for Username)
-        // MySQL comparisons are case-insensitive by default for non-binary strings, 
-        // but we explicitly use LOWER() for clarity if desired, though usually WHERE username = '$input' works.
-        // We will use a standard OR check.
-        $sql = "SELECT id, username, password FROM users WHERE email = '$emailOrUser' OR username = '$emailOrUser'";
-        $result = $conn->query($sql);
+if (empty($emailOrUser) || empty($password)) {
+$error = "Please fill in all fields.";
+} else {
+// Allow login via Email OR Username (Case-Insensitive for Username)
+// MySQL comparisons are case-insensitive by default for non-binary strings,
+// but we explicitly use LOWER() for clarity if desired, though usually WHERE username = '$input' works.
+// We will use a standard OR check.
+$sql = "SELECT id, username, password FROM users WHERE email = '$emailOrUser' OR username = '$emailOrUser'";
+$result = $conn->query($sql);
 
-        if ($result->num_rows > 0) {
-            $row = $result->fetch_assoc();
-            if (password_verify($password, $row['password'])) {
-                $_SESSION['user_id'] = $row['id'];
-                $_SESSION['username'] = $row['username'];
-                header("Location: dashboard.php");
-                exit();
-            } else {
-                $error = "Invalid password.";
-            }
-        } else {
-            $error = "No account found with that email or username.";
-        }
-    }
+if ($result->num_rows > 0) {
+$row = $result->fetch_assoc();
+if (password_verify($password, $row['password'])) {
+$_SESSION['user_id'] = $row['id'];
+$_SESSION['username'] = $row['username'];
+header("Location: dashboard.php");
+exit();
+} else {
+$error = "Invalid password.";
+}
+} else {
+$error = "No account found with that email or username.";
+}
+}
 }
 ?>
 <!DOCTYPE html>
@@ -88,7 +92,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <form method="POST" action="">
                     <div class="auth-form-group">
                         <label class="auth-label">Email or Username</label>
-                        <input type="text" name="email" class="auth-input" placeholder="john@example.com" required>
+                        <input type="text" name="email" class="auth-input" placeholder="john@example.com or johndoe"
+                            required>
                     </div>
 
                     <div class="auth-form-group">
