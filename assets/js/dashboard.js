@@ -583,8 +583,14 @@ document.addEventListener("DOMContentLoaded", function () {
   function onUserTyping() {
     clearTimeout(typingTimer);
     const idInput = document.querySelector("input[name=id]");
-    // Only autosave if we either have an ID OR if we want to allow drafting new notes automatically (usually cleaner to start autosave after first manual save or title entry)
-    // For now, let's enable it always to avoid data loss.
+
+    // Only auto-save if the note has an ID (was manually saved once)
+    if (!idInput || !idInput.value) {
+      // Optional: warn user they need to save manualy?
+      // For now, simply do not schedule auto-save.
+      return;
+    }
+
     if (saveStatus) {
       saveStatus.innerText = "Unsaved changes...";
       typingTimer = setTimeout(triggerAutoSave, doneTypingInterval);

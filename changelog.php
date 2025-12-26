@@ -181,6 +181,23 @@ session_start();
     </div>
 
     <div class="timeline-container">
+        <!-- v1.5.1 -->
+        <div class="timeline-item major">
+            <span class="version-date">Dec 26</span>
+            <div class="changelog-card">
+                <span class="version-tag">v1.5.1</span>
+                <h3>Visual Polish & Sync</h3>
+                <ul class="changelog-list">
+                    <li><strong>Real-Time Sidebar Sync:</strong> Sidebar note cards now instantly reflect the Title's
+                        Font, Weight, Color, and Style as you type.</li>
+                    <li><strong>Smart Content Preview:</strong> The "Start writing" snippet in the sidebar now
+                        dynamically mimics the font and color of your note's body text.</li>
+                    <li><strong>Toolbar Refined:</strong> Removed margins for a sleek, full-width toolbar layout.</li>
+                    <li><strong>Zero FOUC:</strong> Eliminated the initial "Flash of Unstyled Content" for a buttery
+                        smooth editor load.</li>
+                </ul>
+            </div>
+        </div>
         <!-- v1.5.0 -->
         <div class="timeline-item major">
             <span class="version-date">Dec 26</span>
