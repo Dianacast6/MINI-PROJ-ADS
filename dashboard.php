@@ -2,6 +2,11 @@
 include 'config/db.php';
 
 session_start();
+// Prevent browser caching to fix back-button issue after logout
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Cache-Control: post-check=0, pre-check=0", false);
+header("Pragma: no-cache");
+
 if(!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
@@ -16,6 +21,7 @@ $conn->query("DELETE FROM notebooks WHERE is_trashed = 1 AND trashed_at < NOW() 
 // --- INITIALIZE VARIABLES ---
 $current_id = "";
 $current_title = "";
+$current_title_style = "";
 $current_content = "";
 $current_notebook_name_display = "Loose Note"; // Default
 $current_updated_at = "";
@@ -35,6 +41,7 @@ if (isset($_POST['save_note'])) {
         exit();
     }
     $title = mysqli_real_escape_string($conn, $_POST['title']);
+    $title_style = mysqli_real_escape_string($conn, $_POST['title_style']);
     $content = mysqli_real_escape_string($conn, $_POST['content']);
     $nb_id = $_POST['notebook_id'];
     $id = $_POST['id'];
@@ -63,9 +70,9 @@ if (isset($_POST['save_note'])) {
     }
 
     if ($id != '') {
-        $sql = "UPDATE notes SET title='$title', content='$content', notebook_id=$nb_sql WHERE id=$id AND user_id=$user_id";
+        $sql = "UPDATE notes SET title='$title', title_style='$title_style', content='$content', notebook_id=$nb_sql WHERE id=$id AND user_id=$user_id";
     } else {
-        $sql = "INSERT INTO notes (title, content, notebook_id, user_id) VALUES ('$title', '$content', $nb_sql, $user_id)";
+        $sql = "INSERT INTO notes (title, title_style, content, notebook_id, user_id) VALUES ('$title', '$title_style', '$content', $nb_sql, $user_id)";
     }
 
     // Execute Save/Update
@@ -337,6 +344,7 @@ if (isset($_GET['edit'])) {
     if ($row = $res->fetch_assoc()) {
         $current_id = $row['id'];
         $current_title = $row['title'];
+        $current_title_style = $row['title_style'];
         $current_content = $row['content'];
         $editor_target_notebook_id = $row['notebook_id'];
         $current_updated_at = date('M d', strtotime($row['created_at']));
@@ -389,6 +397,9 @@ elseif ($view_mode == 'notes')
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard | QuickNote</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300d26a'%3E%3Ccircle cx='12' cy='12' r='12'/%3E%3C/svg%3E">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300d26a'%3E%3Ccircle cx='12' cy='12' r='12'/%3E%3C/svg%3E">
+    <!-- Script moved to assets/js/dashboard.js -->
     <link rel="stylesheet" href="assets/css/style.css">
     <!-- Quill CSS -->
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
@@ -436,79 +447,13 @@ elseif ($view_mode == 'notes')
             background-color: #252525;
             border: 1px solid #333;
         }
+        
+        /* Fix for Custom Font Labels (Visual Update) */
+        .ql-snow .ql-picker-label[data-label]::before {
+            content: attr(data-label) !important;
+        }
     </style>
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
-    <script>
-        // NEW MODAL LOGIC
-        function openCreateModal() {
-            document.getElementById('create-notebook-modal').classList.add('show');
-            document.getElementById('modal-nb-name').focus();
-        }
-
-        function closeModal() {
-            document.getElementById('create-notebook-modal').classList.remove('show');
-            document.getElementById('modal-nb-name').value = ''; // Clear input
-            checkInput(); // Reset button state
-        }
-
-        function checkInput() {
-            const input = document.getElementById('modal-nb-name');
-            const btn = document.getElementById('btn-create-nb');
-            if (input.value.trim().length > 0) {
-                btn.classList.add('active');
-                btn.disabled = false;
-            } else {
-                btn.classList.remove('active');
-                btn.disabled = true;
-            }
-        }
-
-        function renameNotebook(id, currentName) {
-            let name = prompt("Rename Notebook:", currentName);
-            if (name) { document.getElementById('rename_id').value = id; document.getElementById('rename_val').value = name; document.getElementById('rename_form').submit(); }
-        }
-        function toggleActionMenu(id) {
-            document.querySelectorAll('.action-dropdown').forEach(el => { if (el.id !== 'menu-' + id) el.classList.remove('show'); });
-            document.getElementById('menu-' + id).classList.toggle('show');
-        }
-
-        window.onclick = function (event) {
-            if (!event.target.matches('.action-btn')) { document.querySelectorAll('.action-dropdown').forEach(el => el.classList.remove('show')); }
-            // Close modal if clicking outside content
-            if (event.target.classList.contains('modal-overlay')) { closeModal(); }
-        }
-
-        // --- EDITOR INITIALIZATION ---
-        var quill;
-        document.addEventListener('DOMContentLoaded', function () {
-            if (document.getElementById('editor-container')) {
-                quill = new Quill('#editor-container', {
-                    theme: 'snow',
-                    modules: {
-                        toolbar: [
-                            [{ 'header': [1, 2, 3, false] }],
-                            ['bold', 'italic', 'underline', 'strike'],
-                            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-                            ['blockquote', 'code-block'],
-                            [{ 'color': [] }, { 'background': [] }],
-                            ['clean']
-                        ]
-                    },
-                    placeholder: 'Start writing...'
-                });
-
-                // Sync content on form submit
-                var form = document.querySelector('.editor-form-element');
-                form.onsubmit = function () {
-                    var contentInput = document.querySelector('input[name=content]');
-                    contentInput.value = quill.root.innerHTML;
-                };
-            }
-        });
-    </script>
-    <script>
-        // ... existing code ...
-    </script>
     <style>
         /* IMAGE PREVIEW MODAL */
         #verify-image-modal {
@@ -601,14 +546,30 @@ elseif ($view_mode == 'notes')
     <div class="dashboard-container">
 
         <div class="sidebar">
-            <div style="margin-bottom:15px; color:#888; font-size:0.8rem; padding:0 10px; display:flex; justify-content:space-between; align-items:center;">
-                <span>👤 <?php echo htmlspecialchars($username); ?></span>
-                <a href="logout.php" style="color:#e74c3c; text-decoration:none;">Logout</a>
+            <!-- BRAND HEADER -->
+            <div class="sidebar-brand">
+                <span class="brand-logo">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                        fill="var(--accent-primary)" stroke="none">
+                        <circle cx="12" cy="12" r="10"></circle>
+                    </svg>
+                </span>
+                <span class="brand-text">QuickNote</span>
             </div>
-            <form action="dashboard.php" method="GET">
+
+            <!-- SEARCH (Moved up) -->
+            <!-- SEARCH (Moved up) -->
+            <form action="dashboard.php" method="GET" class="sidebar-search-form" style="position: relative;">
                 <?php if ($filter_notebook_id): ?><input type="hidden" name="notebook"
                         value="<?php echo $filter_notebook_id; ?>"><?php endif; ?>
-                <input type="text" name="search" class="search-box" placeholder="🔍 Search notes..."
+                <span class="search-icon-overlay">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                </span>
+                <input type="text" name="search" class="search-box" placeholder="Search notes..."
                     value="<?php echo htmlspecialchars($search_query); ?>">
             </form>
 
@@ -618,23 +579,61 @@ elseif ($view_mode == 'notes')
 
             <div class="nav-menu">
                 <a href="dashboard.php" class="nav-item <?php echo ($view_mode == 'all') ? 'active' : ''; ?>">
-                    <span class="nav-icon">🏠</span> All Notes
+                    <span class="nav-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                        </svg>
+                    </span> All Notes
                 </a>
 
                 <a href="dashboard.php?view=notes"
                     class="nav-item <?php echo ($view_mode == 'notes') ? 'active' : ''; ?>">
-                    <span class="nav-icon">📄</span> Notes
+                    <span class="nav-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                    </span> Notes
                 </a>
 
                 <a href="dashboard.php?view=notebooks_list"
                     class="nav-item <?php echo ($view_mode == 'notebooks_list' || $view_mode == 'notebook') ? 'active' : ''; ?>">
-                    <span class="nav-icon">📓</span> Notebooks
+                    <span class="nav-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                        </svg>
+                    </span> Notebooks
                 </a>
 
                 <a href="dashboard.php?view=trash"
-                    class="nav-item <?php echo ($view_mode == 'trash') ? 'active' : ''; ?>" style="margin-top:auto;">
-                    <span class="nav-icon">🗑️</span> Trash
+                    class="nav-item <?php echo ($view_mode == 'trash') ? 'active' : ''; ?>">
+                    <span class="nav-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            <line x1="10" y1="11" x2="10" y2="17"></line>
+                            <line x1="14" y1="11" x2="14" y2="17"></line>
+                        </svg>
+                    </span> Trash
                 </a>
+            </div>
+
+            <!-- USER PROFILE (Moved to Bottom) -->
+            <div class="user-profile-bottom">
+                <div class="user-avatar-placeholder"><?php echo strtoupper(substr($username, 0, 1)); ?></div>
+                <div class="user-info-group">
+                    <span class="user-name-display"><?php echo htmlspecialchars($username); ?></span>
+                    <a href="logout.php" class="user-logout-action">Log out</a>
+                </div>
             </div>
         </div>
 
@@ -677,7 +676,15 @@ elseif ($view_mode == 'notes')
                                     <tr>
                                         <td>
                                             <a href="dashboard.php?notebook=<?php echo $nb['id']; ?>" class="nb-title-cell">
-                                                <span class="nb-title-icon">📓</span>
+                                                <span class="nb-title-icon">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                        stroke-linecap="round" stroke-linejoin="round">
+                                                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z">
+                                                        </path>
+                                                    </svg>
+                                                </span>
                                                 <?php echo htmlspecialchars($nb['name']); ?>
                                                 <span class="nb-notes-count">(<?php echo $nb['note_count']; ?>)</span>
                                             </a>
@@ -756,7 +763,14 @@ elseif ($view_mode == 'notes')
                             <div style="border-bottom: 1px solid #333; background:#222;">
                                 <div style="padding: 15px 20px; display:flex; justify-content:space-between; align-items:center;">
                                     <div style="display:flex; align-items:center; gap:8px;">
-                                        <span style="font-size:1.1rem;">📓</span>
+                                        <span style="font-size:1.1rem; display:flex; align-items:center;">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                stroke-linejoin="round">
+                                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                                            </svg>
+                                        </span>
                                         <h4 style="margin:0; color:#eee; font-weight:500; font-size:0.95rem;">
                                             <?php echo htmlspecialchars($nb['name']); ?>
                                         </h4>
@@ -779,7 +793,17 @@ elseif ($view_mode == 'notes')
                                             $trash_link = "dashboard.php?edit=" . $n_row['id'] . "&view=trash";
                                             ?>
                                             <a href="<?php echo $trash_link; ?>" class="trash-nested-note <?php echo $is_active; ?>">
-                                                <span style="font-size:0.8rem;">📄</span>
+                                                <span style="font-size:0.8rem; display:flex; align-items:center;">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                        stroke-linecap="round" stroke-linejoin="round">
+                                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                                                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                                                        <polyline points="10 9 9 9 8 9"></polyline>
+                                                    </svg>
+                                                </span>
                                                 <span><?php echo $n_row['title'] ? htmlspecialchars($n_row['title']) : 'Untitled'; ?></span>
                                             </a>
                                         <?php endwhile; ?>
@@ -875,7 +899,13 @@ elseif ($view_mode == 'notes')
 
                         <div class="editor-header-info">
                             <div class="breadcrumbs">
-                                <span class="notebook-name">📓
+                                <span class="notebook-name">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" style="margin-right:4px; vertical-align:text-bottom;">
+                                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                                    </svg>
                                     <?php echo htmlspecialchars($current_notebook_name_display); ?></span>
                                 <span>›</span>
                                 <span><?php echo $current_title ? htmlspecialchars($current_title) : "Untitled"; ?></span>
@@ -900,15 +930,15 @@ elseif ($view_mode == 'notes')
 
                                 <?php
                                 $display_label = "All Notes";
-                                $display_icon = "📝";
+                                $display_icon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>';
                                 $save_notebook_id = "0";
                                 if ($view_mode == 'notebook') {
                                     $display_label = htmlspecialchars($filter_notebook_name);
-                                    $display_icon = "📓";
+                                    $display_icon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>';
                                     $save_notebook_id = $filter_notebook_id;
                                 } elseif ($view_mode == 'notes') {
                                     $display_label = "Notes";
-                                    $display_icon = "📄";
+                                    $display_icon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>';
                                     $save_notebook_id = ($current_id) ? $editor_target_notebook_id : "0";
                                 } else {
                                     $save_notebook_id = ($current_id) ? $editor_target_notebook_id : "0";
@@ -925,11 +955,26 @@ elseif ($view_mode == 'notes')
                                 <span id="save-status" style="margin-right:10px; font-size:0.8rem; color:#666; font-style:italic;"></span>
                                 
                                 <!-- Attachment Button -->
-                                <button type="button" class="btn-icon-trash" style="margin-right:5px;" onclick="document.getElementById('upload-input').click()">📎</button>
+                                <button type="button" class="btn-icon-trash" style="margin-right:5px;" onclick="document.getElementById('upload-input').click()">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path
+                                            d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48">
+                                        </path>
+                                    </svg>
+                                </button>
                                 <input type="file" id="upload-input" name="attachment" style="display:none;" onchange="uploadFile(this)">
 
                                 <?php if ($current_id): ?>
-                                    <a href="dashboard.php?trash_id=<?php echo $current_id; ?>" class="btn-icon-trash">🗑️</a>
+                                    <a href="dashboard.php?trash_id=<?php echo $current_id; ?>" class="btn-icon-trash">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <polyline points="3 6 5 6 21 6"></polyline>
+                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                        </svg>
+                                    </a>
                                 <?php endif; ?>
 
                                 <button type="submit" name="save_note" class="btn-save-green">Save Note</button>
@@ -937,9 +982,58 @@ elseif ($view_mode == 'notes')
                         </div>
 
                     </div>
+                    
+                    <!-- CUSTOM TOOLBAR CONTAINER (Evernote Style) -->
+                    <div id="toolbar-container">
+                        <span class="ql-formats">
+                            <select class="ql-font" style="width: 120px;">
+                                <option value="poppins" selected>Poppins</option>
+                                <option value="arial">Arial</option>
+                                <option value="calibri">Calibri</option>
+                                <option value="roboto">Roboto</option>
+                                <option value="opensans">Open Sans</option>
+                                <option value="montserrat">Montserrat</option>
+                                <option value="inter">Inter</option>
+                                <option value="lato">Lato</option>
+                                <option value="verdana">Verdana</option>
+                                <option value="georgia">Georgia</option>
+                                <option value="serif">Serif</option>
+                                <option value="monospace">Monospace</option>
+                            </select>
+                        </span>
+                        <span class="ql-formats">
+                            <select class="ql-header">
+                                <option value="1">Heading 1</option>
+                                <option value="2">Heading 2</option>
+                                <option selected>Normal</option>
+                            </select>
+                        </span>
+                        <span class="ql-formats">
+                            <button class="ql-bold"></button>
+                            <button class="ql-italic"></button>
+                            <button class="ql-underline"></button>
+                            <button class="ql-strike"></button>
+                        </span>
+                        <span class="ql-formats">
+                            <button class="ql-list" value="ordered"></button>
+                            <button class="ql-list" value="bullet"></button>
+                        </span>
+                        <span class="ql-formats">
+                            <button class="ql-blockquote"></button>
+                            <button class="ql-code-block"></button>
+                        </span>
+                        <span class="ql-formats">
+                            <button class="ql-clean"></button>
+                        </span>
+                    </div>
+
+                    <div class="editor-form-inner">
                     <input type="hidden" name="id" value="<?php echo $current_id; ?>">
+                    <input type="hidden" name="title_style" id="title-style-input" value="<?php echo htmlspecialchars($current_title_style); ?>">
                     <input type="text" name="title" class="editor-title" placeholder="Title"
-                        value="<?php echo htmlspecialchars($current_title); ?>" <?php echo ($view_mode == 'trash') ? 'readonly' : ''; ?>>
+                        value="<?php echo htmlspecialchars($current_title); ?>" 
+                        style="<?php echo htmlspecialchars($current_title_style); ?>"
+                        <?php echo ($view_mode == 'trash') ? 'readonly' : ''; ?>>
 
                     <!-- TAGS INPUT -->
                     <input type="text" name="tags" class="editor-tags" placeholder="Add tags (separated by comma)..."
@@ -953,7 +1047,15 @@ elseif ($view_mode == 'notes')
                                 $is_image = in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
                             ?>
                                 <div class="att-chip" id="att-<?php echo $att['id']; ?>" style="display:flex; align-items:center; background:#333; padding:5px 10px; border-radius:15px; font-size:0.85rem;">
-                                    <span style="margin-right:5px;">📎</span>
+                                    <span style="margin-right:5px; display:flex;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <path
+                                                d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48">
+                                            </path>
+                                        </svg>
+                                    </span>
                                     <?php if($is_image): ?>
                                         <a href="javascript:void(0)" onclick="viewImage('<?php echo htmlspecialchars($att['file_path']); ?>')" style="color:#ddd; text-decoration:none; margin-right:8px; border-bottom:1px dashed #666;"><?php echo htmlspecialchars($att['original_name']); ?></a>
                                     <?php else: ?>
@@ -971,200 +1073,6 @@ elseif ($view_mode == 'notes')
                     <!-- Quill Editor Container -->
                     <div id="editor-container" style="flex-grow:1; border:none;"><?php echo $current_content; ?></div>
 
-                    <script>
-                        document.addEventListener('DOMContentLoaded', function () {
-                            // AUTO-SAVE LOGIC
-                            let typingTimer;
-                            const doneTypingInterval = 2000; // 2 seconds
-                            const saveStatus = document.getElementById('save-status');
-                            let noteId = "<?php echo $current_id; ?>"; // Now mutable
-
-                            // Inputs
-                            const titleInput = document.querySelector('.editor-title');
-                            const tagsInput = document.querySelector('.editor-tags');
-                            const contentInput = document.querySelector('input[name=content]');
-
-                            function triggerAutoSave() {
-                                // REMOVED: if (!noteId) return; 
-                                // We allow saving new notes now
-                                
-                                if (!saveStatus) return;
-
-                                saveStatus.innerText = "Saving...";
-
-                                // Prepare Data
-                                const formData = new FormData(document.querySelector('.editor-form-element'));
-                                formData.append('save_note', '1');
-                                formData.append('ajax', '1');
-                                // Ensure content is synced (quill is global var from previous script)
-                                if (typeof quill !== 'undefined') formData.set('content', quill.root.innerHTML);
-
-                                fetch('dashboard.php', {
-                                    method: 'POST',
-                                    body: formData
-                                })
-                                    .then(response => response.json())
-                                    .then(data => {
-                                        if (data.status === 'success') {
-                                            saveStatus.innerText = "Saved";
-                                            setTimeout(() => { if (saveStatus) saveStatus.innerText = ""; }, 2000);
-                                            
-                                            // IF it was a new note, we now have an ID!
-                                            if(!noteId && data.id) {
-                                                noteId = data.id;
-                                                // Update hidden input so subsequent saves are updates
-                                                document.querySelector('input[name=id]').value = noteId; 
-                                                // Optional: Update URL without reload
-                                                const url = new URL(window.location);
-                                                url.searchParams.set('edit', noteId);
-                                                window.history.replaceState({}, '', url);
-                                            }
-
-                                            // Update Last Edited text
-                                            const lastEdited = document.querySelector('.last-edited');
-                                            if (lastEdited && data.updated_at) lastEdited.innerText = "Edited " + data.updated_at;
-                                            console.log("Auto-save success");
-                                        }
-                                    })
-                                    .catch(error => {
-                                        console.error('Auto-save error:', error);
-                                        saveStatus.innerText = "Error";
-                                    });
-                            }
-
-                            function onUserTyping() {
-                                clearTimeout(typingTimer);
-                                if (noteId && saveStatus) {
-                                    saveStatus.innerText = "Unsaved changes...";
-                                    typingTimer = setTimeout(triggerAutoSave, doneTypingInterval);
-                                }
-                            }
-
-                            // Attach Listeners
-                            // We need to wait slightly for quill to be fully init if strictly sequential, 
-                            // but since this is also DOMContentLoaded, it might race with the other one.
-                            // Safer to check interval or just attach if ready.
-
-                            if (typeof quill !== 'undefined') {
-                                quill.on('text-change', function () {
-                                    contentInput.value = quill.root.innerHTML;
-                                    onUserTyping();
-                                });
-                            } else {
-                                // Fallback: Wait for window load or check again
-                                window.addEventListener('load', () => {
-                                    if (typeof quill !== 'undefined') {
-                                        quill.on('text-change', function () {
-                                            contentInput.value = quill.root.innerHTML;
-                                            onUserTyping();
-                                        });
-                                    }
-                                });
-                            }
-
-                            if (titleInput) titleInput.addEventListener('input', onUserTyping);
-                            if (tagsInput) tagsInput.addEventListener('input', onUserTyping);
-                        });
-
-                        // ATTACHMENT FUNCTIONS
-                        function uploadFile(input) {
-                            if(input.files && input.files[0]) {
-                                // Check if we have an ID (checking the global let from above, or the hidden input)
-                                // We can reach the 'noteId' variable from the closure if we defined it in global scope, 
-                                // but simpler to read the input value or prompt user.
-                                
-                                const idVal = document.querySelector('input[name=id]').value;
-                                if(!idVal) {
-                                    alert("Please type a title or content and wait for 'Saved' before attaching files.");
-                                    input.value = ''; // reset
-                                    return;
-                                }
-
-                                const file = input.files[0];
-                                const formData = new FormData();
-                                formData.append('attachment', file);
-                                formData.append('note_id', idVal);
-                                
-                                // Show loading state?
-                                document.getElementById('save-status').innerText = "Uploading...";
-                                
-                                fetch('dashboard.php', {
-                                    method: 'POST',
-                                    body: formData
-                                })
-                                .then(res => res.json())
-                                .then(data => {
-                                    if(data.status === 'success') {
-                                        document.getElementById('save-status').innerText = "Uploaded";
-                                        setTimeout(() => { document.getElementById('save-status').innerText = ""; }, 2000);
-                                        
-                                        // Determine if image (simple check)
-                                        const lowerName = data.name.toLowerCase();
-                                        const isImage = lowerName.endsWith('.jpg') || lowerName.endsWith('.jpeg') || lowerName.endsWith('.png') || lowerName.endsWith('.gif') || lowerName.endsWith('.webp');
-                                        
-                                        let linkHtml = '';
-                                        if(isImage) {
-                                            linkHtml = `<a href="javascript:void(0)" onclick="viewImage('${data.path}')" style="color:#ddd; text-decoration:none; margin-right:8px; border-bottom:1px dashed #666;">${data.name}</a>`;
-                                        } else {
-                                            linkHtml = `<a href="${data.path}" target="_blank" style="color:#ddd; text-decoration:none; margin-right:8px;">${data.name}</a>`;
-                                        }
-
-                                        // Append to list
-                                        const container = document.getElementById('attachments-container');
-                                        const chip = document.createElement('div');
-                                        chip.className = 'att-chip';
-                                        chip.style = "display:flex; align-items:center; background:#333; padding:5px 10px; border-radius:15px; font-size:0.85rem;";
-                                        chip.id = 'att-' + data.id;
-                                        chip.innerHTML = `
-                                            <span style="margin-right:5px;">📎</span>
-                                            ${linkHtml}
-                                            <span style="cursor:pointer; color:#888;" onclick="deleteAttachment(${data.id})">×</span>
-                                        `;
-                                        container.appendChild(chip);
-                                        input.value = ''; // clear
-                                    } else {
-                                        alert('Upload failed: ' + data.message);
-                                        document.getElementById('save-status').innerText = "Error";
-                                    }
-                                });
-                            }
-                        }
-
-                        function deleteAttachment(id) {
-                            if(!confirm('Remove attachment?')) return;
-                            const formData = new FormData();
-                            formData.append('delete_attachment', '1');
-                            formData.append('att_id', id);
-                            
-                            fetch('dashboard.php', { method:'POST', body:formData })
-                            .then(res => res.json())
-                            .then(data => {
-                                if(data.status === 'success') {
-                                    const el = document.getElementById('att-'+id);
-                                    if(el) el.remove();
-                                }
-                            });
-                        }
-                        
-                        // IMAGE MODAL FUNCTIONS
-                        function viewImage(src) {
-                            document.getElementById('preview-img-tag').src = src;
-                            document.getElementById('preview-dl-link').href = src;
-                            document.getElementById('verify-image-modal').classList.add('show');
-                        }
-                        function closeImageModal() {
-                            document.getElementById('verify-image-modal').classList.remove('show');
-                            document.getElementById('preview-img-tag').src = "";
-                        }
-                    </script>
-
-                    <?php if ($view_mode == 'trash'): ?>
-                        <script>
-                            document.addEventListener('DOMContentLoaded', function () {
-                                if (quill) quill.disable();
-                            });
-                        </script>
-                    <?php endif; ?>
                 </form>
             </div>
 
@@ -1182,5 +1090,6 @@ elseif ($view_mode == 'notes')
         </div>
     </div>
 
+    <script src="assets/js/dashboard.js"></script>
 </body>
 </html>

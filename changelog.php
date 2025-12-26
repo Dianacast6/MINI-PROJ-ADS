@@ -181,9 +181,29 @@ session_start();
     </div>
 
     <div class="timeline-container">
+        <!-- v1.5.0 -->
+        <div class="timeline-item major">
+            <span class="version-date">Dec 26</span>
+            <div class="changelog-card">
+                <span class="version-tag">v1.5.0</span>
+                <h3>Authentication & Deployment</h3>
+                <ul class="changelog-list">
+                    <li><strong>Authentication Overhaul:</strong> Redesigned Login, Register, and Forgot Password pages
+                        with premium Split-Card layout and interactive 3D elements (DNA Helix, Vortex).</li>
+                    <li><strong>Enhanced Login:</strong> Added support for Username/Email login (case-insensitive) and
+                        password visibility toggles.</li>
+                    <li><strong>Production Ready:</strong> Implemented dynamic database connection for seamless
+                        switching between Localhost and InfinityFree.</li>
+                    <li><strong>Database Sync:</strong> Updated schema to include missing tables (tags, note_tags,
+                        attachments) for full feature support.</li>
+                    <li><strong>Bug Fixes:</strong> Fixed HTTP 500 errors, password case-sensitivity, and corrected
+                        logout redirection.</li>
+                </ul>
+            </div>
+        </div>
         <!-- v1.4.0 -->
         <div class="timeline-item major">
-            <span class="version-date">Today</span>
+            <span class="version-date">Dec 25</span>
             <div class="changelog-card">
                 <span class="version-tag">v1.4.0</span>
                 <h3>Visual Overhaul & Simplification</h3>
@@ -203,7 +223,7 @@ session_start();
         </div>
         <!-- v1.3.0 -->
         <div class="timeline-item major">
-            <div class="version-date">Today</div>
+            <div class="version-date">Dec 24</div>
             <div class="changelog-card">
                 <span class="version-tag">v1.3.0</span>
                 <h3>Features Redesign</h3>
@@ -217,7 +237,7 @@ session_start();
         </div>
         <!-- v1.2.0 -->
         <div class="timeline-item major">
-            <div class="version-date">Today</div>
+            <div class="version-date">Dec 23</div>
             <div class="changelog-card">
                 <span class="version-tag">v1.2.0</span>
                 <h3>Visual Overhaul</h3>

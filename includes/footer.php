@@ -21,7 +21,7 @@
         <div class="footer-col">
             <h4>Get in Touch</h4>
             <ul>
-                <li><a href="mailto:dianacastillon@gmail.com">dianacastillon@gmail.com</a></li>
+                <li><a href="contact.php">dianacastillon@gmail.com</a></li>
                 <li><span>Zamboanga City</span></li>
             </ul>
         </div>
