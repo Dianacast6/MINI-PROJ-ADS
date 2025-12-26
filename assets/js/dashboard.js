@@ -135,9 +135,63 @@ document.addEventListener("DOMContentLoaded", function () {
   const toolbar = document.querySelector("#toolbar-container");
   const tagsInput = document.querySelector(".editor-tags");
 
-  // Loose state tracking - REMOVED in favor of secure activeElement check
-  // let activeField = "editor";
-  // ... events removed ...
+  // RESET TOOLBAR VISUALLY ON LOAD (Neutral State)
+  if (toolbar) {
+    // Run immediately to prevent flash
+    const resetToolbar = () => {
+      // Clear Font Label
+      const fontLabel = toolbar.querySelector(".ql-font .ql-picker-label");
+      // Force it empty immediately
+      if (fontLabel) {
+        fontLabel.setAttribute("data-label", "");
+        // Do NOT nuke innerHTML as it kills Quill listeners/SVG
+      }
+
+      // Deactivate Buttons
+      toolbar
+        .querySelectorAll(".ql-active")
+        .forEach((btn) => btn.classList.remove("ql-active"));
+
+      // Clear Color/Background indicators
+      toolbar
+        .querySelectorAll(
+          ".ql-color .ql-picker-label svg line, .ql-background .ql-picker-label svg line"
+        )
+        .forEach((el) => el.setAttribute("stroke", "#888"));
+
+      // REMOVE LOADING CLASS (FOUC FIX) - Ensure paint first
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          toolbar.classList.remove("toolbar-loading");
+          toolbar.style.visibility = "visible"; // Reveal after reset
+        });
+      });
+    };
+
+    resetToolbar();
+    // Run again specifically after a microtask just in case Quill overrides
+    setTimeout(resetToolbar, 0);
+  }
+  // ADD TOOLTIPS
+  const tooltipMap = {
+    ".ql-bold": "Bold",
+    ".ql-italic": "Italic",
+    ".ql-underline": "Underline",
+    ".ql-strike": "Strikethrough",
+    '.ql-list[value="ordered"]': "Numbered List",
+    '.ql-list[value="bullet"]': "Bulleted List",
+    ".ql-blockquote": "Blockquote",
+    ".ql-code-block": "Code Block",
+    ".ql-clean": "Clear Formatting",
+    ".ql-font": "Font Style",
+    ".ql-header": "Heading Style",
+    ".ql-color": "Text Color",
+    ".ql-background": "Background Color",
+  };
+  for (const [selector, title] of Object.entries(tooltipMap)) {
+    const el = toolbar.querySelector(selector);
+    if (el) el.setAttribute("title", title);
+  }
 
   const fontMap = {
     poppins: "'Poppins', sans-serif",
@@ -176,6 +230,7 @@ document.addEventListener("DOMContentLoaded", function () {
       isApplied = current === "bold" || parseInt(current) >= 700;
     el.style[prop] = isApplied ? normalizeVal : val;
     syncToolbarToInput(el); // Sync immediately after change
+    syncSidebarTitle(el); // Sync Sidebar Title
 
     // Sync to hidden input for saving
     const styleInput = document.getElementById("title-style-input");
@@ -241,9 +296,69 @@ document.addEventListener("DOMContentLoaded", function () {
         : btnUnder.classList.remove("ql-active");
   }
 
+  // --- SYNC SIDEBAR TITLE ---
+  function syncSidebarTitle(input) {
+    if (!input || !input.classList.contains("editor-title")) return;
+    const idInput = document.querySelector("input[name=id]");
+    if (!idInput || !idInput.value) return;
+
+    const sidebarEl = document.getElementById("sidebar-title-" + idInput.value);
+    if (sidebarEl) {
+      sidebarEl.textContent = input.value || "Untitled";
+      // Copy relevant styles
+      sidebarEl.style.fontFamily = input.style.fontFamily;
+      sidebarEl.style.fontWeight = input.style.fontWeight;
+      sidebarEl.style.fontStyle = input.style.fontStyle;
+      sidebarEl.style.textDecoration = input.style.textDecoration;
+      sidebarEl.style.color = input.style.color;
+    }
+  }
+
+  // --- SYNC SIDEBAR SNIPPET (CONTENT STYLE) ---
+  function syncSidebarSnippet() {
+    const idInput = document.querySelector("input[name=id]");
+    if (!idInput || !idInput.value) return;
+
+    const sidebarEl = document.getElementById(
+      "sidebar-snippet-" + idInput.value
+    );
+    if (sidebarEl && window.quill) {
+      // 1. Sync Text Snippet (First 50 chars)
+      const text = window.quill.getText();
+      let snippet = text.slice(0, 50).trim();
+      if (snippet.length === 50) snippet += "...";
+      if (!snippet) snippet = "No additional text";
+      sidebarEl.textContent = snippet;
+
+      // 2. Sync Style (From first character)
+      const format = window.quill.getFormat(0, 1) || {};
+
+      // Font Family
+      let font = format.font ? fontMap[format.font] : fontMap["poppins"];
+      sidebarEl.style.fontFamily = font;
+
+      // Color
+      sidebarEl.style.color = format.color || "#666";
+
+      // Serialize for Hidden Input (DB Save)
+      // We construct a CSS string manually like we do for the title
+      const styleStr = `font-family: ${font}; color: ${
+        format.color || "#666"
+      };`;
+
+      const contentStyleInput = document.getElementById("content-style-input");
+      if (contentStyleInput) contentStyleInput.value = styleStr;
+    }
+  }
+
   // Attach Sync Listeners
   // Attach Sync Listeners with Delay to beat Quill State Updates
-  const forceSync = (el) => setTimeout(() => syncToolbarToInput(el), 50);
+  const forceSync = (el) =>
+    setTimeout(() => {
+      syncToolbarToInput(el);
+      syncSidebarTitle(el);
+      syncSidebarSnippet(); // Also sync snippet style
+    }, 50);
 
   if (titleInput) {
     ["focus", "click", "keyup", "mousedown", "input"].forEach((evt) =>
@@ -354,7 +469,6 @@ document.addEventListener("DOMContentLoaded", function () {
               .setAttribute("stroke", colorVal || "#ccc"); // Show #ccc (white-ish) for default
           } else if (format === "background") {
             input.style.backgroundColor = value || "transparent";
-            picker;
             picker
               .querySelector(".ql-picker-label svg line")
               .setAttribute("stroke", value || "#fff");
@@ -364,6 +478,7 @@ document.addEventListener("DOMContentLoaded", function () {
           input.focus();
 
           // FORCE SYNC HIDDEN INPUT
+          syncSidebarTitle(input); // Sync Sidebar Title
           const styleInput = document.getElementById("title-style-input");
           if (styleInput && input.classList.contains("editor-title")) {
             styleInput.value = input.getAttribute("style");
@@ -428,6 +543,10 @@ document.addEventListener("DOMContentLoaded", function () {
     const tInput = document.querySelector(".editor-title");
     if (tInput) formData.set("title_style", tInput.getAttribute("style") || "");
 
+    // FORCE UPDATE CONTENT STYLE
+    const cStyleInput = document.getElementById("content-style-input");
+    if (cStyleInput) formData.set("content_style", cStyleInput.value || "");
+
     formData.append("save_note", "1");
     formData.append("ajax", "1");
     formData.set("content", window.quill.root.innerHTML);
@@ -475,6 +594,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // Attach Text Change Listener
   window.quill.on("text-change", function () {
     if (contentInput) contentInput.value = window.quill.root.innerHTML;
+    syncSidebarSnippet(); // Update sidebar live
     onUserTyping();
   });
 

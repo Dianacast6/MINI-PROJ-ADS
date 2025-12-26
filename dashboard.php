@@ -22,6 +22,7 @@ $conn->query("DELETE FROM notebooks WHERE is_trashed = 1 AND trashed_at < NOW() 
 $current_id = "";
 $current_title = "";
 $current_title_style = "";
+$current_content_style = ""; // NEW
 $current_content = "";
 $current_notebook_name_display = "Loose Note"; // Default
 $current_updated_at = "";
@@ -42,6 +43,7 @@ if (isset($_POST['save_note'])) {
     }
     $title = mysqli_real_escape_string($conn, $_POST['title']);
     $title_style = mysqli_real_escape_string($conn, $_POST['title_style']);
+    $content_style = mysqli_real_escape_string($conn, $_POST['content_style'] ?? ''); // Fix Undefined Index
     $content = mysqli_real_escape_string($conn, $_POST['content']);
     $nb_id = $_POST['notebook_id'];
     $id = $_POST['id'];
@@ -70,9 +72,9 @@ if (isset($_POST['save_note'])) {
     }
 
     if ($id != '') {
-        $sql = "UPDATE notes SET title='$title', title_style='$title_style', content='$content', notebook_id=$nb_sql WHERE id=$id AND user_id=$user_id";
+        $sql = "UPDATE notes SET title='$title', title_style='$title_style', content_style='$content_style', content='$content', notebook_id=$nb_sql WHERE id=$id AND user_id=$user_id";
     } else {
-        $sql = "INSERT INTO notes (title, title_style, content, notebook_id, user_id) VALUES ('$title', '$title_style', '$content', $nb_sql, $user_id)";
+        $sql = "INSERT INTO notes (title, title_style, content_style, content, notebook_id, user_id) VALUES ('$title', '$title_style', '$content_style', '$content', $nb_sql, $user_id)";
     }
 
     // Execute Save/Update
@@ -345,6 +347,7 @@ if (isset($_GET['edit'])) {
         $current_id = $row['id'];
         $current_title = $row['title'];
         $current_title_style = $row['title_style'];
+        $current_content_style = isset($row['content_style']) ? $row['content_style'] : ""; // NEW
         $current_content = $row['content'];
         $editor_target_notebook_id = $row['notebook_id'];
         $current_updated_at = date('M d', strtotime($row['created_at']));
@@ -410,8 +413,7 @@ elseif ($view_mode == 'notes')
             border-bottom: 1px solid #333;
             background: #191919;
             padding: 12px 20px;
-            margin-right: 20px;
-            margin-left: 20px;
+            /* Removed margins for full width */
         }
 
         .ql-container.ql-snow {
@@ -851,7 +853,7 @@ elseif ($view_mode == 'notes')
                             <div class="note-item <?php echo $active_class; ?>"
                                 onclick="window.location.href='<?php echo $edit_url; ?>'">
                                 <div style="display:flex; justify-content:space-between;">
-                                    <h4 style="flex-grow:1;">
+                                    <h4 style="flex-grow:1; <?php echo htmlspecialchars($row['title_style'] ?? ''); ?>" id="sidebar-title-<?php echo $row['id']; ?>">
                                         <?php echo $row['title'] ? htmlspecialchars($row['title']) : 'Untitled'; ?>
                                     </h4>
                                     <?php if ($view_mode != 'trash'): ?>
@@ -860,7 +862,7 @@ elseif ($view_mode == 'notes')
                                             style="color:#666; padding:0 5px; text-decoration:none;">🗑️</a>
                                     <?php endif; ?>
                                 </div>
-                                <p class="note-snippet"><?php echo $snippet; ?></p>
+                                <p class="note-snippet" id="sidebar-snippet-<?php echo $row['id']; ?>" style="<?php echo htmlspecialchars($row['content_style'] ?? ''); ?>"><?php echo $snippet; ?></p>
                                 <span class="note-meta">
                                     <?php
                                     if ($view_mode == 'trash')
@@ -984,7 +986,7 @@ elseif ($view_mode == 'notes')
                     </div>
                     
                     <!-- CUSTOM TOOLBAR CONTAINER (Evernote Style) -->
-                    <div id="toolbar-container">
+                    <div id="toolbar-container" class="toolbar-loading" style="visibility: hidden;">
                         <span class="ql-formats">
                             <select class="ql-font" style="width: 120px;">
                                 <option value="poppins" selected>Poppins</option>
@@ -1030,6 +1032,7 @@ elseif ($view_mode == 'notes')
                     <div class="editor-form-inner">
                     <input type="hidden" name="id" value="<?php echo $current_id; ?>">
                     <input type="hidden" name="title_style" id="title-style-input" value="<?php echo htmlspecialchars($current_title_style); ?>">
+                    <input type="hidden" name="content_style" id="content-style-input" value="<?php echo htmlspecialchars($current_content_style); ?>"> <!-- NEW -->
                     <input type="text" name="title" class="editor-title" placeholder="Title"
                         value="<?php echo htmlspecialchars($current_title); ?>" 
                         style="<?php echo htmlspecialchars($current_title_style); ?>"
