@@ -17,18 +17,24 @@ CREATE TABLE IF NOT EXISTS notebooks (
     name VARCHAR(100) NOT NULL,
     description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    is_trashed TINYINT(1) DEFAULT 0,
+    trashed_at DATETIME DEFAULT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 -- 3. Create the Notes Table
 CREATE TABLE IF NOT EXISTS notes (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    notebook_id INT NOT NULL,
+    user_id INT NOT NULL,
+    notebook_id INT DEFAULT NULL,
     title VARCHAR(255) NOT NULL,
     title_style TEXT DEFAULT NULL,
     content_style TEXT DEFAULT NULL,
     content LONGTEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    is_trashed TINYINT(1) DEFAULT 0,
+    trashed_at DATETIME DEFAULT NULL,
     FOREIGN KEY (notebook_id) REFERENCES notebooks(id) ON DELETE CASCADE
 );
 -- 4. Create Tags Table

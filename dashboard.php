@@ -1,4 +1,9 @@
 <?php
+// Enable Error Reporting for Debugging
+// ini_set('display_errors', 1);
+// ini_set('display_startup_errors', 1);
+// error_reporting(E_ALL);
+
 include 'config/db.php';
 
 session_start();
@@ -15,8 +20,13 @@ $user_id = $_SESSION['user_id'];
 $username = $_SESSION['username'];
 
 // --- 0. AUTO-MAINTENANCE ---
-$conn->query("DELETE FROM notes WHERE is_trashed = 1 AND trashed_at < NOW() - INTERVAL 30 DAY AND user_id = $user_id");
-$conn->query("DELETE FROM notebooks WHERE is_trashed = 1 AND trashed_at < NOW() - INTERVAL 30 DAY AND user_id = $user_id");
+try {
+    $conn->query("DELETE FROM notes WHERE is_trashed = 1 AND trashed_at < NOW() - INTERVAL 30 DAY AND user_id = $user_id");
+    $conn->query("DELETE FROM notebooks WHERE is_trashed = 1 AND trashed_at < NOW() - INTERVAL 30 DAY AND user_id = $user_id");
+} catch (Throwable $e) {
+    // Sliently fail or log, but don't crash dashboard
+    error_log("Auto-maintenance failed: " . $e->getMessage());
+}
 
 // --- INITIALIZE VARIABLES ---
 $current_id = "";

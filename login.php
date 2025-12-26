@@ -1,8 +1,8 @@
 <?php
 // DEBUGGING: Enable error reporting for InfinityFree
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+// ini_set('display_errors', 1);
+// ini_set('display_startup_errors', 1);
+// error_reporting(E_ALL);
 
 include 'config/db.php';
 session_start();
@@ -16,25 +16,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (empty($emailOrUser) || empty($password)) {
         $error = "Please fill in all fields.";
     } else {
-        // Allow login via Email OR Username (Case-Insensitive for Username)
-// MySQL comparisons are case-insensitive by default for non-binary strings,
-// but we explicitly use LOWER() for clarity if desired, though usually WHERE username = '$input' works.
-// We will use a standard OR check.
-        $sql = "SELECT id, username, password FROM users WHERE email = '$emailOrUser' OR username = '$emailOrUser'";
-        $result = $conn->query($sql);
+        try {
+            // Allow login via Email OR Username (Case-Insensitive for Username)
+            $sql = "SELECT id, username, password FROM users WHERE email = '$emailOrUser' OR username = '$emailOrUser'";
+            $result = $conn->query($sql);
 
-        if ($result->num_rows > 0) {
-            $row = $result->fetch_assoc();
-            if (password_verify($password, $row['password'])) {
-                $_SESSION['user_id'] = $row['id'];
-                $_SESSION['username'] = $row['username'];
-                header("Location: dashboard.php");
-                exit();
+            if ($result->num_rows > 0) {
+                $row = $result->fetch_assoc();
+                if (password_verify($password, $row['password'])) {
+                    $_SESSION['user_id'] = $row['id'];
+                    $_SESSION['username'] = $row['username'];
+                    header("Location: dashboard.php");
+                    exit();
+                } else {
+                    $error = "Invalid password.";
+                }
             } else {
-                $error = "Invalid password.";
+                $error = "No account found with that email or username.";
             }
-        } else {
-            $error = "No account found with that email or username.";
+        } catch (Throwable $e) {
+            // CATCH DB ERRORS
+            $error = "Database Error: " . $e->getMessage();
         }
     }
 }

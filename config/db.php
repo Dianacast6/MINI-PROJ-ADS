@@ -4,7 +4,10 @@
 
 $whitelist = array('127.0.0.1', '::1', 'localhost');
 
-if (in_array($_SERVER['REMOTE_ADDR'], $whitelist) || $_SERVER['SERVER_NAME'] == 'localhost') {
+$remote_addr = $_SERVER['REMOTE_ADDR'] ?? '';
+$server_name = $_SERVER['SERVER_NAME'] ?? '';
+
+if (in_array($remote_addr, $whitelist) || $server_name == 'localhost') {
     // Localhost (XAMPP)
     $servername = "localhost";
     $username = "root";
@@ -18,9 +21,14 @@ if (in_array($_SERVER['REMOTE_ADDR'], $whitelist) || $_SERVER['SERVER_NAME'] == 
     $dbname = "if0_40760361_quicknote_db";
 }
 
-$conn = new mysqli($servername, $username, $password, $dbname);
+// Enable error reporting for mysqli to throw exceptions
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+try {
+    $conn = new mysqli($servername, $username, $password, $dbname);
+    $conn->set_charset("utf8mb4");
+} catch (Exception $e) {
+    // Graceful error for production
+    die("Database Connection Failed: " . $e->getMessage());
 }
 ?>
