@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS notebooks (
     cover_photo VARCHAR(255) DEFAULT NULL,
     space_name VARCHAR(100) DEFAULT 'Personal',
     created_by_user VARCHAR(100),
+    description TEXT DEFAULT NULL,
     user_id INT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP,
