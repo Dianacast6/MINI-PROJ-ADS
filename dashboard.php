@@ -699,6 +699,28 @@ elseif ($view_mode == 'notes')
         </div>
     </div>
 
+    <!-- DELETE FOREVER MODAL -->
+    <div id="delete-forever-modal" class="modal-overlay">
+        <div class="modal-content" style="width: 400px; text-align:center;">
+             <div class="modal-header" style="justify-content:center; flex-direction:column; align-items:center; gap:10px;">
+                <div style="background:rgba(231, 76, 60, 0.1); padding:15px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin-bottom:5px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        <line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line>
+                    </svg>
+                </div>
+                <h3>Delete Forever?</h3>
+            </div>
+            <p class="modal-desc" style="margin-bottom:30px;">This action cannot be undone. Are you sure you want to permanently delete this?</p>
+
+            <div class="modal-actions" style="justify-content:center; gap:15px;">
+                <button type="button" class="btn-modal-cancel" onclick="closeDeleteForeverModal()">Cancel</button>
+                <button type="button" class="btn-modal-create" id="btn-confirm-delete-forever" style="background:#e74c3c; color:white; border:none; box-shadow:0 4px 15px rgba(231, 76, 60, 0.3);">Delete Forever</button>
+            </div>
+        </div>
+    </div>
+
     <div class="dashboard-container">
 
         <div class="sidebar">
@@ -805,14 +827,17 @@ elseif ($view_mode == 'notes')
                     </div>
 
                     <div class="nb-header-actions">
-                        <button class="btn-new-nb-action" onclick="openCreateModal()">
-                            <span style="font-size: 1.2rem; margin-right: 5px;">+</span> New Notebook
-                        </button>
+                        <?php if ($total_notebooks_count > 0): ?>
+                            <button class="btn-new-nb-action" onclick="openCreateModal()">
+                                <span style="font-size: 1.2rem; margin-right: 5px;">+</span> New Notebook
+                            </button>
+                        <?php endif; ?>
 
-                        <form action="dashboard.php" method="GET" class="nb-search-container">
+                        <form action="dashboard.php" method="GET" class="nb-search-container <?php echo ($total_notebooks_count == 0) ? 'disabled-search' : ''; ?>">
                             <input type="hidden" name="view" value="notebooks_list">
                             <input type="text" name="nb_search" class="nb-search-bar" placeholder="Find Notebooks..."
-                                value="<?php echo htmlspecialchars($nb_search_term); ?>">
+                                value="<?php echo htmlspecialchars($nb_search_term); ?>"
+                                <?php echo ($total_notebooks_count == 0) ? 'disabled style="cursor:not-allowed; opacity:0.5;"' : ''; ?>>
                             <span class="nb-search-icon"> </span>
                         </form>
                     </div>
@@ -966,7 +991,7 @@ elseif ($view_mode == 'notes')
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
                                         Restore
                                     </a>
-                                    <a href="dashboard.php?delete_notebook_forever=<?php echo $nb['id']; ?>" onclick="return confirm('Permanently delete notebook and all its notes?')" class="btn-trash-action delete" title="Delete Forever">
+                                    <a href="javascript:void(0)" onclick="openDeleteForeverModal('dashboard.php?delete_notebook_forever=<?php echo $nb['id']; ?>')" class="btn-trash-action delete" title="Delete Forever">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                                         Delete
                                     </a>
@@ -1017,11 +1042,11 @@ elseif ($view_mode == 'notes')
                                     <div class="note-item-actions" onclick="event.stopPropagation();" style="display:flex; gap:8px;">
                                         <?php if ($view_mode == 'trash'): ?>
                                             <!-- Restore -->
-                                            <a href="dashboard.php?restore_note=<?php echo $row['id']; ?>" class="action-icon-btn restore" title="Restore">
+                                            <a href="dashboard.php?restore_id=<?php echo $row['id']; ?>" class="action-icon-btn restore" title="Restore">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
                                             </a>
                                             <!-- Delete Forever -->
-                                            <a href="dashboard.php?delete_note_forever=<?php echo $row['id']; ?>" onclick="return confirm('Permanently delete this note?')" class="action-icon-btn delete" title="Delete Forever">
+                                            <a href="javascript:void(0)" onclick="openDeleteForeverModal('dashboard.php?delete_forever=<?php echo $row['id']; ?>')" class="action-icon-btn delete" title="Delete Forever">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                                             </a>
                                         <?php else: ?>
@@ -1077,16 +1102,50 @@ elseif ($view_mode == 'notes')
 
                     if (!$has_items) {
                         if ($view_mode == 'trash') {
-                            echo '<div class="empty-state-container"><svg class="trash-icon-svg" viewBox="0 0 24 24"><path d="M19 6h-3.5l-1-1h-5l-1 1H5v2h14V6zM6 9v11a2 2 0 002 2h8a2 2 0 002-2V9H6z"/></svg><div class="empty-state-title">Your trash is empty</div></div>';
+                            echo '<div class="empty-state-container">
+                                <div class="empty-trash-art">
+                                    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                                        <defs>
+                                            <linearGradient id="trashGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                <stop offset="0%" style="stop-color:#4a4b50;stop-opacity:1" />
+                                                <stop offset="100%" style="stop-color:#2b2c30;stop-opacity:1" />
+                                            </linearGradient>
+                                            <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                                                <feGaussianBlur stdDeviation="5" result="blur" />
+                                                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                                            </filter>
+                                        </defs>
+                                        <!-- Floating Paper Elements -->
+                                        <g class="floating-papers">
+                                            <path d="M60 50 L90 50 L90 80 L60 80 Z" fill="rgba(255,255,255,0.05)" transform="rotate(-15 75 65)" />
+                                            <path d="M110 40 L130 40 L130 60 L110 60 Z" fill="rgba(255,255,255,0.03)" transform="rotate(20 120 50)" />
+                                            <circle cx="100" cy="30" r="2" fill="#00d26a" opacity="0.5" />
+                                            <circle cx="140" cy="70" r="1.5" fill="#00d26a" opacity="0.3" />
+                                        </g>
+                                        <!-- Bin Body -->
+                                        <path d="M70 70 L80 160 Q100 170 120 160 L130 70 Z" fill="url(#trashGradient)" stroke="rgba(255,255,255,0.1)" stroke-width="2"/>
+                                        <!-- Bin Lid (Hovering) -->
+                                        <path class="bin-lid" d="M65 60 L135 60 Q140 60 140 55 L60 55 Q60 60 65 60 Z M90 55 L90 50 Q90 45 100 45 Q110 45 110 50 L110 55" fill="#3a3b40" stroke="rgba(255,255,255,0.1)" stroke-width="2"/>
+                                        <!-- Glow Effect -->
+                                        <ellipse cx="100" cy="170" rx="40" ry="10" fill="rgba(0, 210, 106, 0.1)" filter="url(#glow)" />
+                                    </svg>
+                                </div>
+                                <div class="empty-state-title">Everything is Clean</div>
+                                <div class="empty-state-desc">Your trash is empty. No deleted notes here.</div>
+                            </div>';
                         } else {
-                            echo "<p style='padding:20px; color:#666;'>No notes found.</p>";
+                            echo "<div class='empty-search-state'>
+                                    <svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='none' stroke='#444' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='8'></circle><line x1='21' y1='21' x2='16.65' y2='16.65'></line></svg>
+                                    <h3>No notes found</h3>
+                                    <p>Try searching for something else.</p>
+                                  </div>";
                         }
                     }
                     ?>
                 </div>
             </div>
 
-            <div class="editor-panel">
+            <div class="editor-panel <?php echo (!$current_id && $view_mode == 'trash') ? 'dimmed-editor' : ''; ?>">
                 <form action="dashboard.php" method="POST" class="editor-form-element"
                     style="height:100%; display:flex; flex-direction:column;">
                     <?php if ($filter_notebook_id): ?>

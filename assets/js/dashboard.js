@@ -33,6 +33,23 @@ window.closeDeleteModal = function () {
   if (modal) modal.classList.remove("show");
 };
 
+window.openDeleteForeverModal = function (url) {
+  const modal = document.getElementById("delete-forever-modal");
+  const btn = document.getElementById("btn-confirm-delete-forever");
+
+  if (modal && btn) {
+    btn.onclick = function () {
+      window.location.href = url;
+    };
+    modal.classList.add("show");
+  }
+};
+
+window.closeDeleteForeverModal = function () {
+  const modal = document.getElementById("delete-forever-modal");
+  if (modal) modal.classList.remove("show");
+};
+
 window.openCreateModal = function () {
   const modal = document.getElementById("create-notebook-modal");
   const input = document.getElementById("modal-nb-name");
@@ -196,6 +213,7 @@ window.onclick = function (event) {
   if (event.target.classList.contains("modal-overlay")) {
     window.closeModal();
     window.closeDeleteModal();
+    window.closeDeleteForeverModal();
     window.closeEditModal();
     window.closeImageModal();
     if (window.closeRenameModal) window.closeRenameModal(); // Safety check

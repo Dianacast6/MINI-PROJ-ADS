@@ -146,6 +146,12 @@ a {
   box-shadow: 0 0 0 2px var(--accent-glow);
 }
 
+.disabled-search {
+  pointer-events: none;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .new-note-group {
   margin-bottom: 25px;
 }
@@ -340,6 +346,12 @@ a {
   flex-direction: column;
   position: relative;
   overflow: hidden; /* For glassmorphism overlaps */
+}
+
+.dimmed-editor {
+  opacity: 0.2; /* Lighter opacity as requested */
+  pointer-events: none;
+  transition: opacity 0.5s ease;
 }
 
 /* Background blob for fun */
@@ -625,35 +637,94 @@ a {
   background: #222;
 }
 
-/* Empty State */
+/* Empty State Redesign */
 .empty-state-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 70vh;
+  height: 100%; /* Fill the parent container for perfect centering */
+  min-height: 400px; /* Minimum height to prevent squashing */
   text-align: center;
-  opacity: 0.8;
+  padding: 20px;
+  background: transparent !important; /* Force transparent in case of inheritance */
 }
+
+.empty-trash-art svg {
+  width: 180px;
+  height: 180px;
+  margin-bottom: 20px;
+  overflow: visible;
+}
+
+.floating-papers {
+  animation: floatPaper 3s ease-in-out infinite;
+}
+
+.bin-lid {
+  animation: floatLid 3s ease-in-out infinite;
+  transform-origin: center;
+}
+
+@keyframes floatPaper {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes floatLid {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-4px) rotate(-1deg);
+  }
+}
+
 .empty-state-title {
-  font-size: 1.8rem;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.6rem;
   font-weight: 700;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   color: var(--text-white);
   letter-spacing: -0.5px;
+  background: linear-gradient(to right, #fff, #aaa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
+
 .empty-state-desc {
-  max-width: 420px;
-  line-height: 1.6;
-  color: #888;
-  font-size: 1rem;
-  margin-bottom: 25px;
+  max-width: 300px;
+  line-height: 1.5;
+  color: #666;
+  font-size: 0.95rem;
+  margin-bottom: 0;
 }
-.empty-state-icon {
-  font-size: 4rem;
-  margin-bottom: 20px;
-  opacity: 0.5;
-  filter: drop-shadow(0 0 20px rgba(0, 168, 45, 0.2));
+
+/* Empty Search State */
+.empty-search-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #555;
+  text-align: center;
+}
+.empty-search-state h3 {
+  margin: 15px 0 5px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #777;
+}
+.empty-search-state p {
+  margin: 0;
+  font-size: 0.9rem;
 }
 
 /* Modals */
