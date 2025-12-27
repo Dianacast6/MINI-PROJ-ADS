@@ -783,13 +783,15 @@ elseif ($view_mode == 'notes')
                 </a>
             </div>
 
-            <!-- USER PROFILE (Moved to Bottom) -->
+            <!-- USER PROFILE (Redesign: Avatar | Name | Logout Icon) -->
             <div class="user-profile-bottom">
                 <div class="user-avatar-placeholder"><?php echo strtoupper(substr($username, 0, 1)); ?></div>
                 <div class="user-info-group">
                     <span class="user-name-display"><?php echo htmlspecialchars($username); ?></span>
-                    <a href="logout.php" class="user-logout-action">Log out</a>
                 </div>
+                <a href="logout.php" class="user-logout-icon-btn" title="Log out">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                </a>
             </div>
         </div>
 
@@ -1006,40 +1008,44 @@ elseif ($view_mode == 'notes')
                                 $snippet = "No additional text";
 
                             ?>
-                            <div class="note-item <?php echo $active_class; ?>"
-                                onclick="window.location.href='<?php echo $edit_url; ?>'">
-                                <div style="display:flex; justify-content:space-between;">
-                                    <h4 style="flex-grow:1; <?php echo htmlspecialchars($row['title_style'] ?? ''); ?>" id="sidebar-title-<?php echo $row['id']; ?>">
+                            <div class="note-item <?php echo $active_class; ?>" onclick="window.location.href='<?php echo $edit_url; ?>'">
+                                <div class="note-item-header" style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
+                                    <h4 style="flex-grow:1; margin:0; font-size:0.95rem; font-weight:600; color:#eee; <?php echo htmlspecialchars($row['title_style'] ?? ''); ?>" id="sidebar-title-<?php echo $row['id']; ?>">
                                         <?php echo $row['title'] ? htmlspecialchars($row['title']) : 'Untitled'; ?>
                                     </h4>
-                                    <?php if ($view_mode != 'trash'): ?>
-                                        <a href="javascript:void(0)"
-                                            onclick="event.stopPropagation(); confirmDelete('<?php echo $trash_url; ?>')"
-                                            style="color:#666; padding:0 5px; text-decoration:none;" title="Move to Trash">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <polyline points="3 6 5 6 21 6"></polyline>
-                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                                <line x1="10" y1="11" x2="10" y2="17"></line>
-                                                <line x1="14" y1="11" x2="14" y2="17"></line>
-                                            </svg>
-                                        </a>
-                                    <?php endif; ?>
+                                    
+                                    <div class="note-item-actions" onclick="event.stopPropagation();" style="display:flex; gap:8px;">
+                                        <?php if ($view_mode == 'trash'): ?>
+                                            <!-- Restore -->
+                                            <a href="dashboard.php?restore_note=<?php echo $row['id']; ?>" class="action-icon-btn restore" title="Restore">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                                            </a>
+                                            <!-- Delete Forever -->
+                                            <a href="dashboard.php?delete_note_forever=<?php echo $row['id']; ?>" onclick="return confirm('Permanently delete this note?')" class="action-icon-btn delete" title="Delete Forever">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                            </a>
+                                        <?php else: ?>
+                                            <!-- Move to Trash -->
+                                            <a href="javascript:void(0)" onclick="confirmDelete('<?php echo $trash_url; ?>')" class="action-icon-btn trash" title="Move to Trash">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                            </a>
+                                        <?php endif; ?>
+                                    </div>
                                 </div>
-                                <p class="note-snippet" id="sidebar-snippet-<?php echo $row['id']; ?>" style="<?php echo htmlspecialchars($row['content_style'] ?? ''); ?>"><?php echo $snippet; ?></p>
-                                
+
                                 <p class="note-snippet" id="sidebar-snippet-<?php echo $row['id']; ?>" style="<?php echo htmlspecialchars($row['content_style'] ?? ''); ?>"><?php echo $snippet; ?></p>
                                 
                                 <div class="note-card-footer">
                                     <span class="note-meta">
                                         <?php
                                         if ($view_mode == 'trash')
-                                            echo "<span style='color:orange;'>In Trash</span>";
+                                            echo "<span style='color:#e74c3c; font-size:0.75rem; font-weight:500;'>In Trash</span>";
                                         else
                                             echo date('M d', strtotime($row['created_at']));
                                         ?>
                                     </span>
                                     
-                                    <div style="display:flex; gap:6px; margin-left:10px; flex-grow:1;">
+                                    <div style="display:flex; gap:6px; margin-left:10px; flex-grow:1; justify-content:flex-end;">
                                         <?php 
                                         if (!empty($row['tag_list'])) {
                                             $tags_to_show = explode(',', $row['tag_list']);
