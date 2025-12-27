@@ -15,6 +15,24 @@ window.addEventListener("pageshow", function (event) {
 
 // --- 1. GLOBAL UI FUNCTIONS (Targeted by HTML onclick attributes) ---
 
+window.confirmDelete = function (url) {
+  const modal = document.getElementById("delete-confirm-modal");
+  const btn = document.getElementById("btn-confirm-delete");
+
+  if (modal && btn) {
+    // Set the action
+    btn.onclick = function () {
+      window.location.href = url;
+    };
+    modal.classList.add("show");
+  }
+};
+
+window.closeDeleteModal = function () {
+  const modal = document.getElementById("delete-confirm-modal");
+  if (modal) modal.classList.remove("show");
+};
+
 window.openCreateModal = function () {
   const modal = document.getElementById("create-notebook-modal");
   const input = document.getElementById("modal-nb-name");
@@ -46,12 +64,76 @@ window.checkInput = function () {
   }
 };
 
-window.renameNotebook = function (id, currentName) {
-  let name = prompt("Rename Notebook:", currentName);
-  if (name) {
-    document.getElementById("rename_id").value = id;
-    document.getElementById("rename_val").value = name;
-    document.getElementById("rename_form").submit();
+window.editNotebook = function (id, currentName, coverPhoto) {
+  const modal = document.getElementById("edit-notebook-modal");
+  const input = document.getElementById("edit-modal-val");
+  const idInput = document.getElementById("edit-modal-id");
+  const btn = document.getElementById("btn-edit-nb");
+  const preview = document.getElementById("edit-cover-preview");
+
+  if (modal && input && idInput) {
+    input.value = currentName;
+    idInput.value = id;
+
+    // Reset preview
+    if (preview) {
+      if (coverPhoto && coverPhoto !== "null" && coverPhoto !== "") {
+        preview.style.backgroundImage = "url('" + coverPhoto + "')";
+        preview.style.display = "block";
+      } else {
+        preview.style.display = "none";
+      }
+    }
+
+    // Enable button initially since we have a value
+    if (btn) {
+      btn.classList.add("active");
+      btn.disabled = false;
+    }
+
+    modal.classList.add("show");
+    input.focus();
+  }
+};
+
+window.closeEditModal = function () {
+  const modal = document.getElementById("edit-notebook-modal");
+  if (modal) modal.classList.remove("show");
+};
+
+window.checkEditInput = function () {
+  const input = document.getElementById("edit-modal-val");
+  const btn = document.getElementById("btn-edit-nb");
+  if (input && btn) {
+    if (input.value.trim().length > 0) {
+      btn.classList.add("active");
+      btn.disabled = false;
+    } else {
+      btn.classList.remove("active");
+      btn.disabled = true;
+    }
+  }
+};
+
+window.previewCover = function (input, previewId, nameDisplayId) {
+  const preview = document.getElementById(previewId);
+  const nameDisplay = document.getElementById(nameDisplayId);
+
+  // Update Filename
+  if (input.files && input.files.length > 0) {
+    if (nameDisplay) {
+      nameDisplay.textContent = input.files[0].name;
+      nameDisplay.classList.add("visible");
+    }
+  }
+
+  if (input.files && input.files[0]) {
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      preview.style.backgroundImage = "url('" + e.target.result + "')";
+      preview.style.display = "block";
+    };
+    reader.readAsDataURL(input.files[0]);
   }
 };
 
@@ -65,15 +147,58 @@ window.toggleActionMenu = function (id) {
 };
 
 // Global Click Listener for UI cleanup
+// --- HEADER MENU TOGGLE ---
+window.toggleHeaderMenu = function (e) {
+  e.stopPropagation();
+  const menu = document.getElementById("header-dropdown-menu");
+  // Close other card dropdowns
+  document
+    .querySelectorAll(".action-dropdown:not(#header-dropdown-menu)")
+    .forEach((el) => {
+      el.classList.remove("show");
+    });
+
+  // Toggle strict display for header menu as it might not rely on .show class in CSS yet,
+  // or use .show if consistent. Based on previous CSS, it uses display:block/none logic often.
+  if (menu.style.display === "block") {
+    menu.style.display = "none";
+    menu.classList.remove("show");
+  } else {
+    menu.style.display = "block";
+    menu.classList.add("show");
+  }
+};
+
+// Global Click Listener for UI cleanup
 window.onclick = function (event) {
-  if (!event.target.matches(".action-btn")) {
+  // 1. Close Card Dropdowns
+  if (
+    !event.target.matches(".action-btn, .action-btn-card, .action-btn-card *")
+  ) {
     document
-      .querySelectorAll(".action-dropdown")
+      .querySelectorAll(".action-dropdown.card-dropdown") // Target card dropdowns specifically
       .forEach((el) => el.classList.remove("show"));
   }
+
+  // 2. Close Header Dropdown
+  if (
+    !event.target.closest(".btn-header-menu") &&
+    !event.target.closest("#header-dropdown-menu")
+  ) {
+    const headerMenu = document.getElementById("header-dropdown-menu");
+    if (headerMenu) {
+      headerMenu.style.display = "none";
+      headerMenu.classList.remove("show");
+    }
+  }
+
+  // 3. Close Modals on Overlay Click
   if (event.target.classList.contains("modal-overlay")) {
     window.closeModal();
+    window.closeDeleteModal();
+    window.closeEditModal();
     window.closeImageModal();
+    if (window.closeRenameModal) window.closeRenameModal(); // Safety check
   }
 };
 
@@ -90,9 +215,19 @@ window.closeImageModal = function () {
   document.getElementById("preview-img-tag").src = "";
 };
 
-// --- 2. DOM CONTENT LOADED (Editor, Toolbar, Autosave) ---
+// --- 2. DOM CONTENT LOADED (Editor, Toolbar, Autosave, Splash) ---
 
 document.addEventListener("DOMContentLoaded", function () {
+  // A. SPLASH SCREEN LOGIC
+  const splash = document.getElementById("splash-screen");
+  if (splash) {
+    // Just fade out. The existence of #splash-screen is now controlled by PHP Session.
+    // So if it's here, it SHOULD show.
+    setTimeout(() => {
+      splash.classList.add("hidden");
+    }, 1000);
+  }
+
   // Check if Editor Exists
   const editorContainer = document.getElementById("editor-container");
   if (!editorContainer) return;

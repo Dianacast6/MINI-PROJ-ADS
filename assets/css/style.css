@@ -657,7 +657,6 @@ a {
 }
 
 /* Modals */
-/* Modals */
 .modal-overlay {
   display: none;
   position: fixed;
@@ -665,7 +664,7 @@ a {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.85); /* Darker backdrop */
   z-index: 2000;
   justify-content: center;
   align-items: center;
@@ -674,70 +673,129 @@ a {
 
 .modal-overlay.show {
   display: flex;
-  animation: fadeIn 0.2s ease-out;
+  animation: fadeIn 0.3s ease-out;
 }
 
 .modal-content {
-  background: #1e1e20;
-  padding: 30px;
-  border-radius: 12px;
-  width: 450px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #191919;
+  padding: 40px;
+  border-radius: 20px;
+  width: 500px;
   position: relative;
   transform: translateY(0);
-  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); /* Bouncy entrance */
+
+  /* Gradient Border Magic */
+  border: 1px solid transparent; /* Fallback */
+  background-clip: padding-box; /* Important for gradient border */
+  box-shadow: 0 20px 80px rgba(0, 0, 0, 0.6);
+}
+
+/* Gradient Border Pseudo-element */
+.modal-content::before {
+  content: "";
+  position: absolute;
+  inset: -2px; /* Border width */
+  z-index: -1;
+  background: linear-gradient(135deg, #00d26a, #43e97b, #38f9d7);
+  border-radius: 22px; /* Content radius + border width */
+  opacity: 0.5;
+  filter: blur(5px); /* Glow effect */
+}
+.modal-content::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: #191919; /* Cover the inner part of the gradient */
+  border-radius: 20px;
+}
+
+.modal-header {
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
 }
 
 .modal-header h3 {
   color: var(--text-white);
   margin: 0;
-  font-size: 1.25rem;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.8rem;
   font-weight: 700;
-  letter-spacing: -0.5px;
+  letter-spacing: -1px;
+}
+
+.close-modal {
+  background: transparent;
+  border: none;
+  color: #666;
+  font-size: 1.5rem;
+  cursor: pointer;
+  line-height: 1;
+  transition: 0.2s;
+}
+.close-modal:hover {
+  color: white;
+  transform: rotate(90deg);
 }
 
 .modal-desc {
-  color: #999;
-  font-size: 0.9rem;
-  margin-top: 10px;
-  margin-bottom: 25px;
-  line-height: 1.5;
+  color: #888;
+  font-size: 1rem;
+  margin-top: 5px;
+  margin-bottom: 30px;
+  line-height: 1.6;
 }
 
 .modal-input {
   width: 100%;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 14px;
-  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid transparent;
+  padding: 16px 20px;
+  border-radius: 12px;
   color: white;
-  font-size: 1rem;
+  font-size: 1.1rem;
   outline: none;
-  transition: all 0.2s;
-  margin-bottom: 30px;
-  font-family: inherit;
+  transition: all 0.3s;
+  margin-bottom: 0; /* Fixed: Removed excessive 40px margin */
+  font-family: "DM Sans", sans-serif;
 }
 
 .modal-input:focus {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
   border-color: var(--accent-primary);
-  box-shadow: 0 0 0 2px rgba(0, 168, 45, 0.2);
+  box-shadow: 0 0 20px rgba(0, 210, 106, 0.2);
+}
+
+.modal-form-group {
+  margin-bottom: 24px;
+}
+
+.modal-form-label {
+  display: block;
+  margin-bottom: 8px;
+  color: #aaa;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-left: 2px;
 }
 
 .modal-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
+  gap: 15px;
 }
 
 .btn-modal-cancel {
   background: transparent;
   border: none;
-  color: #aaa;
-  padding: 10px 20px;
-  border-radius: 6px;
-  font-weight: 500;
+  color: #888;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
   cursor: pointer;
   transition: 0.2s;
 }
@@ -748,24 +806,27 @@ a {
 
 .btn-modal-create {
   background: #333;
-  color: #777;
+  color: #555;
   border: none;
-  padding: 10px 24px;
-  border-radius: 6px;
-  font-weight: 600;
+  padding: 12px 30px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.95rem;
   cursor: not-allowed;
-  transition: 0.2s;
+  transition: 0.3s;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .btn-modal-create.active {
-  background: var(--accent-primary);
+  background: linear-gradient(135deg, var(--accent-primary), #00b359);
   color: white;
   cursor: pointer;
-  box-shadow: 0 4px 15px rgba(0, 168, 45, 0.3);
+  box-shadow: 0 10px 30px rgba(0, 210, 106, 0.3);
 }
 .btn-modal-create.active:hover {
-  background: var(--accent-hover);
-  transform: translateY(-1px);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 15px 40px rgba(0, 210, 106, 0.5);
 }
 
 @keyframes fadeIn {
@@ -1017,4 +1078,692 @@ a {
 #toolbar-container.toolbar-loading .ql-picker.ql-font {
   opacity: 0 !important;
   visibility: hidden !important;
+}
+
+/* --- NOTEBOOK CARD GRID (Creative Redesign) --- */
+.notebook-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 28px;
+  padding: 20px 10px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.notebook-card {
+  background-color: transparent; /* Letting the cover do the work */
+  border-radius: 16px;
+  overflow: visible; /* Needed for hover effects escaping bounds if we want */
+  position: relative;
+  transition: var(--anim-fast);
+  cursor: pointer;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+}
+
+.notebook-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.notebook-cover {
+  height: 180px;
+  width: 100%;
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.2);
+}
+
+.notebook-card-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0.6) 100%
+  );
+  z-index: 1;
+  opacity: 0.6;
+  transition: opacity 0.3s;
+}
+
+.notebook-card:hover .notebook-card-overlay {
+  opacity: 0.8;
+}
+
+.nb-card-count {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  color: white;
+  font-size: 0.75rem;
+  padding: 5px 12px;
+  border-radius: 20px;
+  z-index: 2;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.notebook-info {
+  background: #1f2023; /* Solid backing for text */
+  padding: 20px 24px;
+  position: relative;
+  z-index: 2;
+  border-radius: 0 0 16px 16px;
+  margin-top: -15px; /* Overlap effect */
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: none;
+}
+
+.notebook-title {
+  margin: 0 0 8px 0;
+  color: var(--text-white);
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.5px;
+}
+
+.notebook-meta {
+  font-size: 0.85rem;
+  color: #888;
+  font-weight: 500;
+}
+
+.notebook-actions {
+  position: absolute;
+  bottom: 25px; /* Aligned with info section */
+  right: 20px;
+  z-index: 10;
+}
+
+.action-btn-card {
+  background: transparent;
+  border: none;
+  color: #aaa;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-btn-card:hover,
+.notebook-card:hover .action-btn-card {
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Card Dropdown - FIXED */
+.action-dropdown {
+  display: none; /* User Fix: Hidden by default */
+  position: absolute;
+  background: #2a2b30;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 6px;
+  width: 160px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  z-index: 100;
+}
+
+.action-dropdown.show {
+  display: block;
+  animation: fadeIn 0.1s ease-out;
+}
+
+.action-dropdown.card-dropdown {
+  right: 0;
+  bottom: 100%; /* Pop UP instead of down for safety */
+  top: auto;
+  margin-bottom: 8px;
+  transform: none;
+}
+
+.action-item {
+  display: block;
+  padding: 8px 12px;
+  color: #ccc;
+  font-size: 0.9rem;
+  text-decoration: none;
+  border-radius: 4px;
+  transition: 0.2s;
+}
+.action-item:hover {
+  background: var(--accent-primary);
+  color: white;
+}
+.action-item.delete:hover {
+  background: #e74c3c;
+  color: white;
+}
+
+/* --- NOTEBOOK MANAGER HEADER (Fix for unstyled appearance) --- */
+.nb-header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0 auto 30px;
+  max-width: 1200px;
+  padding: 0 10px;
+}
+
+.nb-header-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nb-header-title {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-white);
+  letter-spacing: -1px;
+  margin: 0;
+}
+
+.nb-count-badge {
+  background: rgba(255, 255, 255, 0.1);
+  color: #aaa;
+  font-size: 0.9rem;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+.nb-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+/* Redesigned "New Notebook" Button */
+.btn-new-nb-action {
+  background: var(--accent-primary);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(0, 210, 106, 0.2);
+}
+
+.btn-new-nb-action:hover {
+  background: var(--accent-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 210, 106, 0.3);
+}
+
+/* Search Bar in Header */
+.nb-search-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.nb-search-bar {
+  background: #232428;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 10px 15px;
+  border-radius: 6px;
+  color: white;
+  font-size: 0.9rem;
+  width: 200px;
+  outline: none;
+  transition: 0.2s;
+}
+
+.nb-search-bar:focus {
+  border-color: var(--accent-primary);
+  width: 240px;
+  background: #2a2b30;
+}
+
+/* --- EMPTY STATE STYLING --- */
+/* (Re-defining to ensure specificity and override any defaults) */
+.empty-state-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 60vh;
+  text-align: center;
+  background: var(--bg-editor); /* Ensure it matches bg */
+}
+
+.empty-state-title {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-white);
+  margin-bottom: 12px;
+  letter-spacing: -1px;
+}
+
+.empty-state-desc {
+  color: #888;
+  font-size: 1.1rem;
+  max-width: 400px;
+  margin-bottom: 25px;
+}
+
+/* Button override if needed */
+.btn-save {
+  background: var(--accent-primary);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.btn-save:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+/* --- CUSTOM FILE UPLOAD --- */
+.custom-file-wrapper {
+  position: relative;
+  display: block;
+  margin-top: 5px;
+}
+
+.custom-file-input {
+  display: none; /* Hide the default ugly input */
+}
+
+.custom-file-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #aaa;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 0.95rem;
+  gap: 10px;
+}
+
+.custom-file-label:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+  color: #fff;
+}
+
+.custom-file-label i,
+.custom-file-label svg {
+  margin-right: 5px;
+}
+
+.file-name-display {
+  display: block;
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: #4cd137;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.file-name-display.visible {
+  opacity: 1;
+}
+
+#edit-cover-preview {
+  width: 100%;
+  height: 160px;
+  background-size: cover;
+  background-position: center;
+  border-radius: 12px;
+  margin-top: 15px;
+  display: none;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+/* --- NOTEBOOK BADGE ON CARD --- */
+.note-item-footer {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+}
+
+.note-item-badge {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(0, 210, 106, 0.1); /* Subtle green tint matching accent */
+  color: var(--accent-primary);
+  font-size: 0.75rem;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  border: 1px solid rgba(0, 210, 106, 0.2);
+}
+
+.note-item-preview {
+  margin-bottom: 5px; /* Adjust spacing */
+}
+/* --- NOTEBOOK BADGE ON CARD --- */
+.note-item-footer {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+}
+
+.note-item-badge {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(0, 210, 106, 0.1); /* Subtle green tint matching accent */
+  color: var(--accent-primary);
+  font-size: 0.75rem;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  border: 1px solid rgba(0, 210, 106, 0.2);
+  margin-left: 2px;
+}
+
+.note-item-preview {
+  margin-bottom: 5px; /* Adjust spacing */
+}
+/* --- NOTE CARD FOOTER RE-ALIGNMENT --- */
+.note-card-footer {
+  display: flex;
+  justify-content: space-between; /* Pushes meta to left, badge to right */
+  align-items: flex-end; /* Aligns them nicely at the bottom */
+  margin-top: 10px;
+}
+
+/* Override previous badge styles if needed to fit new container */
+.note-item-badge {
+  margin-left: 0; /* Reset margin */
+}
+
+/* Ensure meta doesn't float on its own anymore */
+.note-meta {
+  display: inline-block;
+}
+/* --- TAG PILLS --- */
+.tag-pill {
+  background: rgba(255, 255, 255, 0.1);
+  color: #bbb;
+  border-radius: 12px;
+  padding: 2px 8px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  white-space: nowrap;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.tag-pill:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+/* --- TRASH UI REDESIGN --- */
+
+.trash-section-title {
+  padding: 15px 20px 10px;
+  font-size: 0.8rem;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+
+.trash-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  padding: 0 20px;
+  margin-bottom: 20px;
+}
+
+.trash-card {
+  background: rgba(43, 44, 48, 0.4);
+  border: 1px solid rgba(255, 107, 107, 0.2);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  backdrop-filter: blur(5px);
+}
+
+.trash-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  border-color: rgba(255, 107, 107, 0.4);
+}
+
+.trash-card-header {
+  padding: 15px;
+  background: rgba(255, 107, 107, 0.05); /* Subtle red tint */
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.trash-card-icon {
+  color: #e74c3c;
+  display: flex;
+  align-items: center;
+}
+
+.trash-card-title {
+  margin: 0;
+  color: #eee;
+  font-size: 1rem;
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.trash-card-body {
+  padding: 15px;
+  min-height: 80px;
+}
+
+.trash-notes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.trash-note-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #888;
+  font-size: 0.85rem;
+}
+
+.trash-note-icon {
+  color: #555;
+  font-size: 1.2rem;
+  line-height: 0.5;
+}
+
+.trash-note-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.trash-more-notes {
+  font-size: 0.75rem;
+  color: #555;
+  font-style: italic;
+  margin-top: 4px;
+}
+
+.trash-empty-msg {
+  color: #555;
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+.trash-card-actions {
+  display: flex;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.btn-trash-action {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px;
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.btn-trash-action.restore {
+  color: var(--accent-green);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.btn-trash-action.restore:hover {
+  background: rgba(0, 210, 106, 0.1);
+}
+
+.btn-trash-action.delete {
+  color: #e74c3c;
+}
+
+.btn-trash-action.delete:hover {
+  background: rgba(231, 76, 60, 0.1);
+}
+/* --- CLICKABLE TRASH NOTES --- */
+.trash-note-item:hover .trash-note-title {
+  color: var(--accent-primary);
+  text-decoration: underline;
+}
+
+.trash-note-item:hover .trash-note-icon {
+  color: var(--accent-primary);
+}
+/* --- HEADER MENU --- */
+.btn-header-menu {
+  background: transparent;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  transition: 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-header-menu:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.header-dropdown {
+  top: 100%;
+  right: 0;
+  width: 180px;
+  margin-top: 5px;
+  transform-origin: top right;
+  /* Ensure it uses the shared .action-dropdown styles but positioned correctly */
+}
+/* --- SPLASH SCREEN --- */
+#splash-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #121212; /* Deep dark background */
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+  transition: opacity 0.5s ease-out, visibility 0.1s ease-out;
+}
+
+#splash-screen.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.splash-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.splash-icon {
+  color: #00d26a; /* Brand Accent */
+  filter: drop-shadow(0 0 10px rgba(0, 210, 106, 0.4));
+  filter: drop-shadow(0 0 10px rgba(0, 210, 106, 0.4));
+}
+
+.splash-title {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.5px;
+}
+
+.splash-footer {
+  position: absolute;
+  bottom: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  opacity: 0.7;
+}
+
+.splash-from {
+  font-size: 0.8rem;
+  color: #666;
+  letter-spacing: 0.5px;
+}
+
+.splash-brand {
+  font-size: 1rem;
+  color: #fff;
+  font-weight: 600;
+  letter-spacing: 1px;
+  background: linear-gradient(45deg, #00d26a, #2ecc71);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }

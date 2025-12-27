@@ -13,13 +13,15 @@ CREATE TABLE IF NOT EXISTS users (
 -- 2. Create the Notebooks Table
 CREATE TABLE IF NOT EXISTS notebooks (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    cover_photo VARCHAR(255) DEFAULT NULL,
+    space_name VARCHAR(100) DEFAULT 'Personal',
+    created_by_user VARCHAR(100),
     user_id INT NOT NULL,
-    name VARCHAR(100) NOT NULL,
-    description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP,
     is_trashed TINYINT(1) DEFAULT 0,
-    trashed_at DATETIME DEFAULT NULL,
+    trashed_at TIMESTAMP NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 -- 3. Create the Notes Table
